@@ -31,7 +31,9 @@ $.widget( "ui.slider", $.ui.mouse, {
 		range: false,
 		step: 1,
 		value: 0,
-		values: null
+		values: null,
+        unittext: null,
+        name: null
 	},
 
 	_create: function() {
@@ -51,7 +53,7 @@ $.widget( "ui.slider", $.ui.mouse, {
 				" ui-widget" +
 				" ui-widget-content" +
 				" ui-corner-all" );
-		
+
 		if ( o.disabled ) {
 			this.element.addClass( "ui-slider-disabled ui-disabled" );
 		}
@@ -128,8 +130,10 @@ $.widget( "ui.slider", $.ui.mouse, {
 			});
 
 		this.handles.each(function( i ) {
-			$( this ).data( "index.ui-slider-handle", i );
-		});
+			$( this ).data( "index.ui-slider-handle", i ).attr("aria-valuenow", o.values ? o.values[i] : o.value);
+            if (self.options.unittext)
+                $(this).data("index.ui-slider-handle", i).attr("aria-valuetext", (o.values ? o.values[i] : o.value) + " " + self.options.unittext);
+        });
 
 		this.handles
 			.keydown(function( event ) {
@@ -139,11 +143,11 @@ $.widget( "ui.slider", $.ui.mouse, {
 					curVal,
 					newVal,
 					step;
-	
+
 				if ( self.options.disabled ) {
 					return;
 				}
-	
+
 				switch ( event.keyCode ) {
 					case $.ui.keyCode.HOME:
 					case $.ui.keyCode.END:
@@ -164,14 +168,14 @@ $.widget( "ui.slider", $.ui.mouse, {
 						}
 						break;
 				}
-	
+
 				step = self.options.step;
 				if ( self.options.values && self.options.values.length ) {
 					curVal = newVal = self.values( index );
 				} else {
 					curVal = newVal = self.value();
 				}
-	
+
 				switch ( event.keyCode ) {
 					case $.ui.keyCode.HOME:
 						newVal = self._valueMin();
@@ -200,27 +204,58 @@ $.widget( "ui.slider", $.ui.mouse, {
 						newVal = self._trimAlignValue( curVal - step );
 						break;
 				}
-	
+
 				self._slide( event, index, newVal );
-	
+
 				return ret;
-	
+
 			})
 			.keyup(function( event ) {
 				var index = $( this ).data( "index.ui-slider-handle" );
-	
+
 				if ( self._keySliding ) {
 					self._keySliding = false;
 					self._stop( event, index );
 					self._change( event, index );
 					$( this ).removeClass( "ui-state-active" );
 				}
-	
+
 			});
+
+        var ariaDefaults = {
+            role: 'slider',
+            "aria-valuemin": this.options.min,
+            "aria-valuemax": this.options.max,
+        };
+
+        if (this.handles.length > 1) {
+            var labelSuffix = "";
+            if (o.label) { // multiple handles, single label
+                this.handles.each(function(i,e) {
+                    // create unique label for each handle
+                    labelSuffix = (o.range && i < 2) ? (i == 0 ? "min" : "max") : i + 1;
+                    $(this).attr("title", o.label + " " + labelSuffix);
+                });
+            }
+            else if (o.labels) { // multiple handles, multiple labels
+                this.handles.each(function(i,e) {
+                    if (o.labels[i])
+                        $(this).attr("title", o.labels[i]);
+                });
+            }
+        }
+        else if (o.label) // single handle, single label
+            ariaDefaults.title = o.label;
+
+
+        this.handles.attr(ariaDefaults);
 
 		this._refreshValue();
 
 		this._animateOff = false;
+        this._updateAriaLimit("min");
+        this._updateAriaLimit("max");
+
 	},
 
 	destroy: function() {
@@ -297,7 +332,7 @@ $.widget( "ui.slider", $.ui.mouse, {
 		closestHandle
 			.addClass( "ui-state-active" )
 			.focus();
-		
+
 		offset = closestHandle.offset();
 		mouseOverHandle = !$( event.target ).parents().andSelf().is( ".ui-slider-handle" );
 		this._clickOffset = mouseOverHandle ? { left: 0, top: 0 } : {
@@ -323,7 +358,7 @@ $.widget( "ui.slider", $.ui.mouse, {
 	_mouseDrag: function( event ) {
 		var position = { x: event.pageX, y: event.pageY },
 			normValue = this._normValueFromMouse( position );
-		
+
 		this._slide( event, this._handleIndex, normValue );
 
 		return false;
@@ -342,7 +377,7 @@ $.widget( "ui.slider", $.ui.mouse, {
 
 		return false;
 	},
-	
+
 	_detectOrientation: function() {
 		this.orientation = ( this.options.orientation === "vertical" ) ? "vertical" : "horizontal";
 	},
@@ -392,14 +427,16 @@ $.widget( "ui.slider", $.ui.mouse, {
 	},
 
 	_slide: function( event, index, newVal ) {
-		var otherVal,
+	   var handle = this.handles[index];
+
+	    var otherVal,
 			newValues,
 			allowed;
 
 		if ( this.options.values && this.options.values.length ) {
 			otherVal = this.values( index ? 0 : 1 );
 
-			if ( ( this.options.values.length === 2 && this.options.range === true ) && 
+			if ( ( this.options.values.length === 2 && this.options.range === true ) &&
 					( ( index === 0 && newVal > otherVal) || ( index === 1 && newVal < otherVal ) )
 				) {
 				newVal = otherVal;
@@ -417,6 +454,9 @@ $.widget( "ui.slider", $.ui.mouse, {
 				otherVal = this.values( index ? 0 : 1 );
 				if ( allowed !== false ) {
 					this.values( index, newVal, true );
+					$(handle).attr("aria-valuenow",newVal);
+                    if (this.options.unittext)
+                        $(handle).attr("aria-valuetext", newVal + " " + this.options.unittext);
 				}
 			}
 		} else {
@@ -428,6 +468,9 @@ $.widget( "ui.slider", $.ui.mouse, {
 				} );
 				if ( allowed !== false ) {
 					this.value( newVal );
+					$(handle).attr("aria-valuenow",newVal);
+                    if (this.options.unittext)
+                        $(handle).attr("aria-valuetext", newVal + " " + this.options.unittext);
 				}
 			}
 		}
@@ -546,6 +589,10 @@ $.widget( "ui.slider", $.ui.mouse, {
 				}
 				this._animateOff = false;
 				break;
+	        case 'min':
+            case 'max':
+                this._updateAriaLimit(key);
+                break;
 		}
 	},
 
@@ -582,7 +629,7 @@ $.widget( "ui.slider", $.ui.mouse, {
 			return vals;
 		}
 	},
-	
+
 	// returns the step-aligned value that val is closest to, between (inclusive) min and max
 	_trimAlignValue: function( val ) {
 		if ( val <= this._valueMin() ) {
@@ -611,7 +658,7 @@ $.widget( "ui.slider", $.ui.mouse, {
 	_valueMax: function() {
 		return this.options.max;
 	},
-	
+
 	_refreshValue: function() {
 		var oRange = this.options.range,
 			o = this.options,
@@ -647,6 +694,12 @@ $.widget( "ui.slider", $.ui.mouse, {
 					}
 				}
 				lastValPercent = valPercent;
+
+                $(this).attr('aria-valuenow', self.values(i));
+                //since ranged thumbs can't pass each other, update ARIA min/max boundary for opposite handle
+                if (self.options.range && i < 2) {
+                    self.handles.eq(i == 0 ? 1 : 0).attr(i == 0 ? 'aria-valuemin' : 'aria-valuemax', self.values(i));
+                }
 			});
 		} else {
 			value = this.value();
@@ -670,7 +723,21 @@ $.widget( "ui.slider", $.ui.mouse, {
 			if ( oRange === "max" && this.orientation === "vertical" ) {
 				this.range[ animate ? "animate" : "css" ]( { height: ( 100 - valPercent ) + "%" }, { queue: false, duration: o.animate } );
 			}
+
+			this.handle.attr('aria-valuenow', value);
 		}
+    },
+
+    _updateAriaLimit : function(key) {
+        var value = this.options[key];
+        if (this.range && this.options.values && this.options.values.length == 2) {
+            this.handles.eq(key == "min" ? 0 : 1).attr(key == "min" ? 'aria-valuemin' : 'aria-valuemax', value);
+        }
+        else {
+            this.handles.each(function(i) {
+                $(this).attr(key == "min" ? 'aria-valuemin' : 'aria-valuemax', value);
+            });
+        }
 	}
 
 });
