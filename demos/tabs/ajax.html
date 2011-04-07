@@ -4,7 +4,7 @@
 	<meta charset="utf-8">
 	<title>jQuery UI Tabs - Content via Ajax</title>
 	<link rel="stylesheet" href="../../themes/base/jquery.ui.all.css">
-	<script src="../../jquery-1.4.4.js"></script>
+	<script src="../../jquery-1.5.1.js"></script>
 	<script src="../../ui/jquery.ui.core.js"></script>
 	<script src="../../ui/jquery.ui.widget.js"></script>
 	<script src="../../ui/jquery.ui.tabs.js"></script>
@@ -14,7 +14,8 @@
 		$( "#tabs" ).tabs({
 			ajaxOptions: {
 				error: function( xhr, status, index, anchor ) {
-					$( anchor.hash ).html(
+					var selector = $( anchor ).attr( "aria-controls" );
+					$( selector ).html(
 						"Couldn't load this tab. We'll try to fix this as soon as possible. " +
 						"If this wouldn't be a demo." );
 				}
