@@ -239,7 +239,7 @@ $(function() {
     $.support.highContrast = ($.curCSS(div, "borderTopColor") == $.curCSS(div, "borderRightColor")) ||
         (bkImg != null && (bkImg == "none" || bkImg == "url(invalid-url:)"));
     if ($.support.highContrast) {
-        $("body").addClass("high-contrast");
+        $("body").addClass("ui-helper-highcontrast");
     }
 
     if ($.browser.msie) {
