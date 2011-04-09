@@ -9,3 +9,27 @@
  */
 .ui-progressbar { height:2em; text-align: left; }
 .ui-progressbar .ui-progressbar-value {margin: -1px; height:100%; }
+
+.ui-helper-highcontrast .ui-progressbar-value { /* Border is used to create fill in HC mode*/
+	border-color: black;
+	border-style: solid;
+	position: absolute;
+	width:0px;
+	border-right-width: 10000px;
+}
+
+ .ui-helper-highcontrast .ui-progressbar {
+	overflow : hidden;
+	position: relative;
+	text-align: center;
+ }
+
+.ui-helper-highcontrast .ui-progressbar-valuetext {
+	top: 0px;
+}
+
+.ui-helper-highcontrast .ui-progressbar-valuetext {
+	font-size: 1.4em;
+	position: relative;
+	display: inline-block;
+}
