@@ -31,5 +31,6 @@
 .ui-helper-highcontrast .ui-progressbar-valuetext {
 	font-size: 1.4em;
 	position: relative;
+	background-color: #FFF; /* will still be transparent in IE6*/
 	display: inline-block;
 }
