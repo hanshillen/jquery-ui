@@ -123,6 +123,34 @@ $.widget("ui.menubar", {
 			}
 		});
 	},
+	_destroy : function() {
+		var items = this.element.is("ul") ? 
+			this.element.children("li").removeClass("ui-menubar-item").removeAttr("role", "presentation").children("button, a") :
+			this.element.children("button, a");
+		
+		this.element.removeClass('ui-menubar ui-widget-header ui-helper-clearfix').removeAttr("role", "menubar").unbind(".menubar");;
+		items.unbind("focusin focusout click focus mouseenter keydown");
+		
+			items
+			.removeClass("ui-button ui-widget ui-button-text-only ui-menubar-link")
+			.removeAttr("role", "menuitem")
+			.removeAttr("aria-haspopup", "true")
+			.children("span.ui-button-text").each(function(i, e) {
+				var item = $(this);
+				item.parent().html(item.html());
+			});
+		$(document).unbind(".menubar");
+
+		//TODO remove icons
+		
+		this.element.find(":ui-menu").menu("destroy")
+		.show()
+		.removeAttr("aria-hidden", "true")
+		.removeAttr("aria-expanded", "false")
+		.removeAttr("tabindex")
+		.unbind("keydown", "blur")
+		;
+	},
 	
 	_close: function() {
 		this.active.menu("closeAll").hide().attr("aria-hidden", "true").attr("aria-expanded", "false");

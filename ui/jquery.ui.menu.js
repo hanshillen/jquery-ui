@@ -160,20 +160,31 @@ $.widget("ui.menu", {
 	},
 	
 	_destroy: function() {
+		//destroy (sub)menus
 		this.element
+			.removeAttr( "aria-activedescendant" )
+			.find("ul")
+			.andSelf()
 			.removeClass( "ui-menu ui-widget ui-widget-content ui-corner-all" )
-			.removeAttr( "tabIndex" )
 			.removeAttr( "role" )
-			.removeAttr( "aria-activedescendant" );
+			.removeAttr("id")
+			.removeAttr( "aria-labelledby" )
+			.removeAttr( "aria-expanded" )
+			.removeAttr( "aria-hidden" )
+			.show();
 		
-		this.element.children( ".ui-menu-item" )
+		//destroy menu items
+		this.element.find( ".ui-menu-item" )
+			.unbind( ".menu" )
 			.removeClass( "ui-menu-item" )
 			.removeAttr( "role" )
 			.children( "a" )
 			.removeClass( "ui-corner-all ui-state-hover" )
 			.removeAttr( "tabIndex" )
-			.removeAttr("id")
-			.unbind( ".menu" );
+			.removeAttr( "role" )
+			.removeAttr( "aria-haspopup" )
+			.removeAttr( "id" )
+			.children(".ui-icon").remove();		
 	},
 	
 	refresh: function() {
