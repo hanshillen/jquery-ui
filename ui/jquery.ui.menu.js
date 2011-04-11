@@ -195,7 +195,16 @@ $.widget("ui.menu", {
 		items.children( "a" )
 			.addClass( "ui-corner-all" )
 			.attr( "tabIndex", -1 )
-			.attr( "role", "menuitem" );
+			.attr( "role", "menuitem" )
+			.attr("id", function(i) {return self.element.attr("id") + "-" + i});
+		
+		submenus.each(function() {
+			var menu = $(this);
+			var item = menu.prev("a") 
+			item.attr("aria-haspopup", "true")
+			.prepend('<span class="ui-icon ui-icon-carat-1-e"></span>');
+			menu.attr("aria-labelledby", item.attr("id"));
+		});
 	},
 
 	focus: function( event, item ) {
@@ -220,13 +229,14 @@ $.widget("ui.menu", {
 		this.active = item.first()
 			.children( "a" )
 				.addClass( "ui-state-focus" )
-				.attr( "id", function(index, id) {
-					return (self.itemId = id || self.menuId + "-activedescendant");
-				})
+				//.attr( "id", function(index, id) {
+				//	return (self.itemId = id || self.menuId + "-activedescendant");
+				//})
 			.end();
 		// need to remove the attribute before adding it for the screenreader to pick up the change
 		// see http://groups.google.com/group/jquery-a11y/msg/929e0c1e8c5efc8f
-		this.element.removeAttr("aria-activedescendant").attr("aria-activedescendant", self.itemId)
+		//this.element.removeAttr("aria-activedescendant").attr("aria-activedescendant", self.itemId);
+		self.element.attr("aria-activedescendant", self.active.children("a").attr("id"))
 		
 		self.timer = setTimeout(function() {
 			self._close();
@@ -249,9 +259,9 @@ $.widget("ui.menu", {
 		
 		this.active.children( "a" ).removeClass( "ui-state-focus" );
 		// remove only generated id
-		$( "#" + this.menuId + "-activedescendant" ).removeAttr( "id" );
-		this.element.removeAttr( "aria-activedescenant" );
-		this._trigger( "blur", event );
+		//$( "#" + this.menuId + "-activedescendant" ).removeAttr( "id" );
+		//this.element.removeAttr( "aria-activedescenant" );
+		//this._trigger( "blur", event );
 		this.active = null;
 	},
 
@@ -303,11 +313,12 @@ $.widget("ui.menu", {
 	},
 
 	right: function(event) {
+		var self= this;
 		var newItem = this.active && this.active.children("ul").children("li").first();
 		if (newItem && newItem.length) {
 			this._open(newItem.parent());
 			var current = this.active;
-			this.focus(event, newItem);
+			setTimeout(function(){self.focus(event, newItem)}, 20);
 			return true;
 		}
 	},

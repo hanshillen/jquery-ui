@@ -154,6 +154,7 @@ $.widget("ui.menubar", {
 			of: button
 		})
 		.removeAttr("aria-hidden").attr("aria-expanded", "true")
+		.menu("focus", event, menu.children("li").first())
 		.focus();
 		
 	},
