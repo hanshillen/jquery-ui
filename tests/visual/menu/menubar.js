@@ -48,7 +48,7 @@ $.widget("ui.menubar", {
 					break;
 				};
 			}).blur(function( event ) {
-				self._close( event );
+				//self._close( event );
 			});
 		});
 		items.each(function() {
@@ -67,7 +67,7 @@ $.widget("ui.menubar", {
 					return;
 				}
    				if (self.open || event.type == "click") {
-   					self._open(event, menu);
+   					//self._open(event, menu);
    				}
    			})
 			.bind( "keydown", function( event ) {
@@ -116,6 +116,7 @@ $.widget("ui.menubar", {
 					if (self.active.menu("left", event) !== true) {
 						var active = self.active;
 						self.active.blur();
+						self._close( event );
 						active.prev().focus();
 					}
 				}
