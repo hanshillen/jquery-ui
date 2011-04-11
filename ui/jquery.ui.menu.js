@@ -32,7 +32,7 @@ $.widget("ui.menu", {
 			.addClass( "ui-menu ui-widget ui-widget-content ui-corner-all" )
 			.attr({
 				id: this.menuId,
-				role: "listbox"
+				role: "menu"
 			})
 			.bind( "click.menu", function( event ) {
 				var item = $( event.target ).closest( ".ui-menu-item:has(a)" );
@@ -172,29 +172,30 @@ $.widget("ui.menu", {
 			.children( "a" )
 			.removeClass( "ui-corner-all ui-state-hover" )
 			.removeAttr( "tabIndex" )
+			.removeAttr("id")
 			.unbind( ".menu" );
 	},
 	
 	refresh: function() {
+		var self = this;
 		// initialize nested menus
-		// TODO add role=listbox to these, too? or just the top level menu?
 		var submenus = this.element.find("ul:not(.ui-menu)")
 			.addClass( "ui-menu ui-widget ui-widget-content ui-corner-all" )
+			.attr("role", "menu")
 			.hide()
-		
-		submenus
-			.prev("a")
-			.prepend('<span class="ui-icon ui-icon-carat-1-e"></span>');
-		
+			.attr("aria-hidden", "true")
+			.attr("aria-expanded", "false")
+			;
 		
 		// don't refresh list items that are already adapted
 		var items = submenus.add(this.element).children( "li:not(.ui-menu-item):has(a)" )
 			.addClass( "ui-menu-item" )
-			.attr( "role", "menuitem" );
+			.attr( "role", "presentation" );
 		
 		items.children( "a" )
 			.addClass( "ui-corner-all" )
-			.attr( "tabIndex", -1 );
+			.attr( "tabIndex", -1 )
+			.attr( "role", "menuitem" );
 	},
 
 	focus: function( event, item ) {
@@ -264,7 +265,7 @@ $.widget("ui.menu", {
 	},
 	
 	_open: function(submenu) {
-		this.element.find(".ui-menu").not(submenu.parents()).hide();
+		this.element.find(".ui-menu").not(submenu.parents()).hide().attr("aria-hidden", "true");
 			
 		var position = $.extend({}, {
 			of: this.active
@@ -273,14 +274,14 @@ $.widget("ui.menu", {
 			: this.options.position
 		);
 
-		submenu.show().position(position);
+		submenu.show().removeAttr("aria-hidden").attr("aria-expanded", "true").position(position);
 		
 		this.active.find(">a:first").addClass("ui-state-active");
 	},
 	
 	closeAll: function() {
 		this.element
-		 .find("ul").hide().end()
+		 .find("ul").hide().attr("aria-hidden", "true").attr("aria-expanded", "false").end()
 		 .find("a.ui-state-active").removeClass("ui-state-active");
 		this.blur();
 		this.activeMenu = this.element;
@@ -288,14 +289,14 @@ $.widget("ui.menu", {
 	
 	_close: function() {
 		this.active.parent()
-		 .find("ul").hide().end()
+		 .find("ul").hide().attr("aria-hidden", "true").attr("aria-expanded", "false").end()
 		 .find("a.ui-state-active").removeClass("ui-state-active");
 	},
 
 	left: function(event) {
-		var newItem = this.active && this.active.parents("li").first();
+		var newItem = this.active && this.active.parents("li:not(.ui-menubar-item)").first();
 		if (newItem && newItem.length) {
-			this.active.parent().hide();
+			this.active.parent().attr("aria-hidden", "true").attr("aria-expanded", "false").hide();
 			this.focus(event, newItem);
 			return true;
 		}
