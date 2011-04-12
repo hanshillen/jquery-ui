@@ -110,7 +110,17 @@ $.widget( "ui.button", {
 				self.refresh();
 			});
 		}
-
+        
+        if ( this.type === "checkbox" || this.type === "radio" ) {
+            // Original HTML control is focused, but hidden. Manually show highlight the visual widget.
+            this.element.bind("focus.button", function(event) {
+                    self.buttonElement.addClass( focusClass );
+                })
+                .bind("blur.button", function(event) {
+                    self.buttonElement.removeClass( focusClass );
+                });
+        }
+		
 		if ( this.type === "checkbox" ) {
 			this.buttonElement.bind( "click.button", function() {
 				if ( options.disabled ) {
@@ -296,7 +306,7 @@ $.widget( "ui.button", {
 			multipleIcons = icons.primary && icons.secondary,
 			buttonClasses = [];  
 
-		if ( icons.primary || icons.secondary ) {
+		if ( $.support.highContrast ||  icons.primary || icons.secondary ) {
 			if ( this.options.text ) {
 				buttonClasses.push( "ui-button-text-icon" + ( multipleIcons ? "s" : ( icons.primary ? "-primary" : "-secondary" ) ) );
 			}
@@ -309,7 +319,7 @@ $.widget( "ui.button", {
 				buttonElement.append( "<span class='ui-button-icon-secondary ui-icon " + icons.secondary + "'></span>" );
 			}
 
-			if ( !this.options.text ) {
+			if ( !this.options.text && !$.support.highContrast) {
 				buttonClasses.push( multipleIcons ? "ui-button-icons-only" : "ui-button-icon-only" );
 
 				if ( !this.hasTitle ) {
