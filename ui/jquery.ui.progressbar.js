@@ -35,6 +35,12 @@ $.widget( "ui.progressbar", {
 			.appendTo( this.element );
 
 		this.oldValue = this._value();
+		if ($.support.highContrast) {
+			this.valueDiv.css('right', 0 + "%");			
+			this.valueTextDiv = $( "<span class='ui-progressbar-valuetext'>" 
+				+ this._value() + "</span>")
+				.appendTo( this.element );
+		}
 		this._refreshValue();
 	},
 
@@ -92,11 +98,18 @@ $.widget( "ui.progressbar", {
 			this._trigger( "change" );
 		}
 
+	if (!$.support.highContrast) {
 		this.valueDiv
 			.toggle( value > this.min )
 			.toggleClass( "ui-corner-right", value === this.options.max )
 			.width( percentage.toFixed(0) + "%" );
+		}
+		else {
+			this.valueDiv.css("right" , (100 - percentage.toFixed(0)) + "%");
+			this.valueTextDiv.text(percentage.toFixed(0) + "%");		
+		}
 		this.element.attr( "aria-valuenow", value );
+		this.element.attr( "aria-valuetext", value + "%" );
 	}
 });
 
