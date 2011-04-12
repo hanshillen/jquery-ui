@@ -98,18 +98,16 @@ $.widget( "ui.progressbar", {
 			this._trigger( "change" );
 		}
 
-		
-		
-		  if (!$.support.highContrast) {
-			  this.valueDiv
-				.toggleClass( "ui-corner-right", value === this.options.max )
-				.width( percentage.toFixed(0) + "%" );  
-			}
-			else {
-				this.valueDiv.css("right" , (100 - percentage.toFixed(0)) + "%");
-				this.valueTextDiv.text(percentage.toFixed(0) + "%");
-			}
-
+	if (!$.support.highContrast) {
+		this.valueDiv
+			.toggle( value > this.min )
+			.toggleClass( "ui-corner-right", value === this.options.max )
+			.width( percentage.toFixed(0) + "%" );
+		}
+		else {
+			this.valueDiv.css("right" , (100 - percentage.toFixed(0)) + "%");
+			this.valueTextDiv.text(percentage.toFixed(0) + "%");		
+		}
 		this.element.attr( "aria-valuenow", value );
 		this.element.attr( "aria-valuetext", value + "%" );
 	}
