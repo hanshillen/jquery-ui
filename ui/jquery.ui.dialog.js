@@ -294,7 +294,7 @@ $.widget("ui.dialog", {
 
 		// prevent tabbing out of modal dialogs
 		if ( options.modal ) {
-			uiDialog.bind( "keypress.ui-dialog", function( event ) {
+			uiDialog.bind( "keydown.ui-dialog", function( event ) {
 				if ( event.keyCode !== $.ui.keyCode.TAB ) {
 					return;
 				}
@@ -782,12 +782,23 @@ $.extend( $.ui.dialog.overlay, {
 	create: function( dialog ) {
 		if ( this.instances.length === 0 ) {
 			// prevent use of anchors and inputs
+			$("<div class='ui-helper-hidden-accessible' tabindex='0'></div>")
+				.focus(function(event){
+					$(dialog.uiDialog.find(":tabbable").get().concat(dialog.uiDialog.get(0)))
+						.first().focus();
+				})
+				.attr("id", "ui-dialog-overlay-start")
+				.prependTo(document.body)
+				.clone(true)
+				.attr("id","ui-dialog-overlay-end")
+				.appendTo(document.body);
+			
 			// we use a setTimeout in case the overlay is created from an
 			// event that we're going to be cancelling (see #2804)
 			setTimeout(function() {
 				// handle $(el).dialog().dialog('close') (see #4065)
 				if ( $.ui.dialog.overlay.instances.length ) {
-					$( document ).bind( $.ui.dialog.overlay.events, function( event ) {
+					$( document.body ).bind( $.ui.dialog.overlay.events, function( event ) {
 						// stop events if the z-index of the target is < the z-index of the overlay
 						// we cannot return true when we don't want to cancel the event (#3523)
 						if ( $( event.target ).zIndex() < $.ui.dialog.overlay.maxZ ) {
@@ -834,6 +845,7 @@ $.extend( $.ui.dialog.overlay, {
 
 		if ( this.instances.length === 0 ) {
 			$( [ document, window ] ).unbind( ".dialog-overlay" );
+			$("#ui-dialog-overlay-start, #ui-dialog-overlay-end").remove();	
 		}
 
 		$el.remove();
