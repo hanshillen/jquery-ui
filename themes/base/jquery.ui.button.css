@@ -36,3 +36,13 @@ input.ui-button { padding: .4em 1em; }
 
 /* workarounds */
 button.ui-button::-moz-focus-inner { border: 0; padding: 0; } /* reset extra padding in Firefox */
+
+/* High contrast styles */
+
+.ui-helper-highcontrast .ui-button-text, .ui-helper-highcontrast .ui-button-text { padding: .4em .4em .4em .4em; }
+.ui-helper-highcontrast .ui-button-icon-only:focus .ui-button-icon-primary { outline: none; }
+/* Make toggle state visual in high contrast mode */
+.ui-helper-highcontrast .ui-state-active .ui-button-text { text-decoration: underline; font-style: italic; }
+.ui-helper-highcontrast .ui-icon {
+	height: 0;
+}
