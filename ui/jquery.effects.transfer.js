@@ -1,21 +1,22 @@
 /*
  * jQuery UI Effects Transfer @VERSION
  *
- * Copyright (c) 2010 AUTHORS.txt (http://jqueryui.com/about)
- * Dual licensed under the MIT (MIT-LICENSE.txt)
- * and GPL (GPL-LICENSE.txt) licenses.
+ * Copyright 2011, AUTHORS.txt (http://jqueryui.com/about)
+ * Dual licensed under the MIT or GPL Version 2 licenses.
+ * http://jquery.org/license
  *
  * http://docs.jquery.com/UI/Effects/Transfer
  *
  * Depends:
  *	jquery.effects.core.js
  */
-(function($) {
+(function( $, undefined ) {
 
-$.effects.transfer = function(o) {
-	return this.queue(function() {
-		var elem = $(this),
-			target = $(o.options.to),
+$.effects.effect.transfer = function( o ) {
+	
+	return this.queue( function() {
+		var elem = $( this ),
+			target = $( o.to ),
 			endPosition = target.offset(),
 			animation = {
 				top: endPosition.top,
@@ -24,9 +25,9 @@ $.effects.transfer = function(o) {
 				width: target.innerWidth()
 			},
 			startPosition = elem.offset(),
-			transfer = $('<div class="ui-effects-transfer"></div>')
-				.appendTo(document.body)
-				.addClass(o.options.className)
+			transfer = $( '<div class="ui-effects-transfer"></div>' )
+				.appendTo( document.body )
+				.addClass( o.className )
 				.css({
 					top: startPosition.top,
 					left: startPosition.left,
@@ -34,9 +35,9 @@ $.effects.transfer = function(o) {
 					width: elem.innerWidth(),
 					position: 'absolute'
 				})
-				.animate(animation, o.duration, o.options.easing, function() {
+				.animate( animation, o.duration, o.easing, function() {
 					transfer.remove();
-					(o.callback && o.callback.apply(elem[0], arguments));
+					$.isFunction( o.complete ) && o.complete.apply(elem[0], arguments);
 					elem.dequeue();
 				});
 	});
