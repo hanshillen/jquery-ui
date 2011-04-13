@@ -1,9 +1,9 @@
 /*
  * jquery.simulate - simulate browser mouse and keyboard events
  *
- * Copyright (c) 2010 AUTHORS.txt (http://jqueryui.com/about)
- * Dual licensed under the MIT (MIT-LICENSE.txt)
- * and GPL (GPL-LICENSE.txt) licenses.
+ * Copyright 2011, AUTHORS.txt (http://jqueryui.com/about)
+ * Dual licensed under the MIT or GPL Version 2 licenses.
+ * http://jquery.org/license
  *
  */
 
@@ -120,6 +120,7 @@ $.extend($.simulate.prototype, {
 		this.simulateEvent(document, "mousemove", coord);
 		this.simulateEvent(document, "mousemove", coord);
 		this.simulateEvent(target, "mouseup", coord);
+		this.simulateEvent(target, "click", coord);
 	},
 	findCenter: function(el) {
 		var el = $(this.target), o = el.offset();
