@@ -13,10 +13,10 @@ $.widget("ui.menubar", {
    },
 	_create: function() {
 		var self = this;
-		var items = this.items = this.element.is("ul") ? 
-			this.element.children("li").addClass("ui-menubar-item").attr("role", "presentation").children("button, a") :
-			this.element.children("button, a");
-		
+		var items = this.items = this.element.children("li")
+			.addClass("ui-menubar-item")
+			.attr("role", "presentation")
+			.children("button, a");
 		items.slice(1).attr("tabIndex", -1);
 		var o = this.options;
 				
@@ -130,9 +130,10 @@ $.widget("ui.menubar", {
 		});
 	},
 	_destroy : function() {
-		var items = this.element.is("ul") ? 
-			this.element.children("li").removeClass("ui-menubar-item").removeAttr("role", "presentation").children("button, a") :
-			this.element.children("button, a");
+		var items = this.element.children("li")
+			.removeClass("ui-menubar-item")
+			.removeAttr("role", "presentation")
+			.children("button, a");
 		
 		this.element.removeClass('ui-menubar ui-widget-header ui-helper-clearfix').removeAttr("role", "menubar").unbind(".menubar");;
 		items.unbind("focusin focusout click focus mouseenter keydown");
@@ -196,52 +197,42 @@ $.widget("ui.menubar", {
 	
 	_prev: function( event, button ) {
 		button.attr("tabIndex", -1);
-		var prev = this.element.is("ul") ?
-		button.parent().prevAll("li").children( ".ui-button" ).eq( 0 ) : button.prevAll( ".ui-button" ).eq( 0 );
+		var prev = button.parent().prevAll("li").children( ".ui-button" ).eq( 0 );
 		if (prev.length) {
 			prev.removeAttr("tabIndex")[0].focus();
 		} else {
-			var lastItem = this.element.is("ul") ?
-				this.element.children("li:last").children(".ui-button:last") : this.element.children(".ui-button:last");
+			var lastItem = this.element.children("li:last").children(".ui-button:last");
 			lastItem.removeAttr("tabIndex")[0].focus();
 		}
 	},
 	
 	_next: function( event, button ) {
 		button.attr("tabIndex", -1);
-		var next = this.element.is("ul") ?
-			button.parent().nextAll("li").children( ".ui-button" ).eq( 0 ) : button.nextAll( ".ui-button" ).eq( 0 );
+		var next = button.parent().nextAll("li").children( ".ui-button" ).eq( 0 );
 		if (next.length) {
 			next.removeAttr("tabIndex")[0].focus();
 		} else {
-			var firstItem = this.element.is("ul") ? 
-				this.element.children("li:first").children(".ui-button:first") : this.element.children(".ui-button:first");
+			var firstItem = this.element.children("li:first").children(".ui-button:first");
 			firstItem.removeAttr("tabIndex")[0].focus();
 		}
 	},
 	
 	_left: function(event) {
-		var prev = this.element.is("ul") ?
-			this.active.parent().prevAll("li:eq(0)").children( ".ui-menu" ).eq( 0 ) : this.active.prevAll( ".ui-menu" ).eq( 0 );
-		
+		var prev = this.active.parent().prevAll("li:eq(0)").children( ".ui-menu" ).eq( 0 );
 		if (prev.length) {
 			this._open(event, prev);
 		} else {
-			var lastItem = this.element.is("ul") ? 
-				this.element.children("li:last").children(".ui-menu:first") : this.element.children(".ui-menu:last");
+			var lastItem = this.element.children("li:last").children(".ui-menu:first");
 			this._open(event, lastItem);
 		}
 	},
 	
 	_right: function(event) {
-		var next = this.element.is("ul") ?
-			this.active.parent().nextAll("li:eq(0)").children( ".ui-menu" ).eq( 0 ) : this.active.nextAll( ".ui-menu" ).eq( 0 );
+		var next = this.active.parent().nextAll("li:eq(0)").children( ".ui-menu" ).eq( 0 );
 		if (next.length) {
 			this._open(event, next);
 		} else {
-			var firstItem = this.element.is("ul") ? 
-				this.element.children("li:first").children(".ui-menu:first") : this.element.children(".ui-menu:first");
-			
+			var firstItem = this.element.children("li:first").children(".ui-menu:first");
 			this._open(event, firstItem);
 		}
 	}
