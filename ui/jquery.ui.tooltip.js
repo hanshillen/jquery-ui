@@ -34,6 +34,15 @@ $.widget("ui.tooltip", {
 			mouseover: "open",
 			focusin: "open"
 		});
+		var self = this;
+		this.element.bind("keyup.tooltip", function(event){
+	        if (event.keyCode == $.ui.keyCode.ESCAPE)
+	            self.close(event);
+	    });
+	},
+	
+	_destroy: function() {
+		this.element.unbind(".tooltip")
 	},
 	
 	enable: function() {
