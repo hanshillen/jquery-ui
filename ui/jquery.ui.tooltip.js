@@ -47,11 +47,7 @@ $.widget("ui.tooltip", {
 			})
 			.bind("blur.tooltip mouseout.tooltip", function(event) {
 				self.close( event );
-			})
-		    .keyup(function(event){
-		        if (event.keyCode == $.ui.keyCode.ESCAPE)
-		            self.close(event);
-		    });
+			});
 	},
 	
 	enable: function() {
