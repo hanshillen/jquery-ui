@@ -72,7 +72,7 @@ $.widget("ui.menubar", {
 					self._close();
 					return;
 				}
-   				if (event.type == "click") {
+   				if ((self.open && event.type == "mouseenter") || event.type == "click") {
    					self._open(event, menu);
    				}
    			})
