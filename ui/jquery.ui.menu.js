@@ -240,13 +240,7 @@ $.widget("ui.menu", {
 		this.active = item.first()
 			.children( "a" )
 				.addClass( "ui-state-focus" )
-				//.attr( "id", function(index, id) {
-				//	return (self.itemId = id || self.menuId + "-activedescendant");
-				//})
 			.end();
-		// need to remove the attribute before adding it for the screenreader to pick up the change
-		// see http://groups.google.com/group/jquery-a11y/msg/929e0c1e8c5efc8f
-		//this.element.removeAttr("aria-activedescendant").attr("aria-activedescendant", self.itemId);
 		self.element.attr("aria-activedescendant", self.active.children("a").attr("id"))
 		
 		self.timer = setTimeout(function() {
@@ -269,10 +263,6 @@ $.widget("ui.menu", {
 		clearTimeout(this.timer);
 		
 		this.active.children( "a" ).removeClass( "ui-state-focus" );
-		// remove only generated id
-		//$( "#" + this.menuId + "-activedescendant" ).removeAttr( "id" );
-		//this.element.removeAttr( "aria-activedescenant" );
-		//this._trigger( "blur", event );
 		this.active = null;
 	},
 
