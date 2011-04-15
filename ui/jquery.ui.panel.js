@@ -13,6 +13,8 @@
  */
 (function($) {
 
+var increments = 0
+
 $.widget("ui.panel", {
 	
 	options: {
@@ -51,6 +53,15 @@ $.widget("ui.panel", {
 				self.click($(this));
 				return false;
 			});
+
+		this.headers.each(function(i,e){
+			var pHeader = $(this);
+			if (!pHeader.attr("id"))
+				pHeader.attr("id", "ui-panel-" + increments++);
+			var expandedState = pHeader.hasClass("ui-state-active") ? "true" : "false";
+			pHeader.add(pHeader.next())
+				.wrapAll("<div role='region' aria-labelledby='" + pHeader.attr("id") +"' aria-expanded='"+ expandedState+"'></div>");
+		});
 		this._createIcons();
 
 		this.headers
@@ -73,6 +84,7 @@ $.widget("ui.panel", {
 		this.headers.find("a").removeAttr("tabindex");
 		this._destroyIcons();
 		var contents = this.headers.next().css("display", "").removeAttr("role").removeClass("ui-helper-reset ui-widget-content ui-corner-bottom ui-panel-content ui-panel-content-active");
+		this.headers.unwrap();
 	},
 	
 	_setOption: function(key, value) {
@@ -84,7 +96,10 @@ $.widget("ui.panel", {
 				this._createIcons();
 			}
 		}
-		
+		else if (key == "disabled") {
+			this.headers.parent().attr("aria-disabled", value);
+		}
+
 	},
 	
 	_createIcons: function() {
@@ -104,7 +119,11 @@ $.widget("ui.panel", {
 	click: function(header) {
 		header.toggleClass("ui-state-active ui-corner-top ui-corner-all")
 			.find(".ui-icon").toggleClass(this.options.icons.headerSelected).toggleClass(this.options.icons.header);
-		header.next().toggleClass("ui-panel-content-active").slideToggle("fast");
+		header.next()
+			.slideToggle("fast")
+			.toggleClass("ui-panel-content-active")
+			.parent().attr("aria-expanded", header.hasClass("ui-state-active") ? "true" : "false")
+			;
 	}
 });
 
