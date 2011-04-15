@@ -26,8 +26,10 @@ $.widget("ui.menubar", {
 		items.next("ul").each(function(i, elm) {
 			$(elm).menu({
 				select: function(event, ui) {
-					ui.item.parents("ul:last").hide()
-					self.options.select.apply(this, arguments);
+					ui.item.parents("ul.ui-menu:last").hide();
+					self._trigger( "select", event, ui );
+					self._close();
+					$(event.target).prev().focus();
 				}
 			}).hide()
 			.attr("aria-hidden", "true")
@@ -46,9 +48,13 @@ $.widget("ui.menubar", {
 					self._right(event);
 					event.preventDefault();
 					break;
+				case $.ui.keyCode.TAB:
+					self.open= false;
+					break;
 				};
 			}).blur(function( event ) {
-				//self._close( event );
+				if (!self.open)
+					self._close( event );
 			});
 		});
 		items.each(function() {
@@ -66,8 +72,8 @@ $.widget("ui.menubar", {
 					self._close();
 					return;
 				}
-   				if (self.open || event.type == "click") {
-   					//self._open(event, menu);
+   				if (event.type == "click") {
+   					self._open(event, menu);
    				}
    			})
 			.bind( "keydown", function( event ) {
