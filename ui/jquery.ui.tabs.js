@@ -123,7 +123,7 @@ $.widget( "ui.tabs", {
 		}
 		
 		// keyboard
-		this.element.bind($.browser.mozilla ? "keypress.tabs" : "keydown.tabs", function(event){
+		this.list.bind($.browser.mozilla ? "keypress.tabs" : "keydown.tabs", function(event){
 			if (event.keyCode < $.ui.keyCode.PAGE_UP || event.keyCode > $.ui.keyCode.DOWN)
 				return;
     	    var selectedIndex, goingForward = true;
