@@ -98,16 +98,18 @@ $.widget( "ui.tabs", {
 		this._refresh();
 
 		// highlight selected tab
-		this.panels.hide();
+		this.panels.hide().attr("aria-hidden", "true");
 		this.lis.removeClass( "ui-tabs-active ui-state-active" );
 		// check for length avoids error when initializing empty list
 		if ( options.active !== false && this.anchors.length ) {
 			this.active = this._findActive( options.active );
 			var panel = that._getPanelForTab( this.active );
 
-			panel.show();
+			panel.show().attr("aria-hidden", "false");
 
-			this.lis.eq( options.active ).addClass( "ui-tabs-active ui-state-active" );
+			this.lis.eq( options.active ).addClass( "ui-tabs-active ui-state-active" )
+				.children("a").attr("aria-expanded", "true").attr("aria-selected", "true").attr("tabindex", "0")
+			;
 
 			// TODO: we need to remove this or add it to accordion
 			// seems to be expected behavior that the activate callback is fired
@@ -119,6 +121,81 @@ $.widget( "ui.tabs", {
 		} else {
 			this.active = $();
 		}
+		
+		// keyboard
+		this.element.bind($.browser.mozilla ? "keypress.tabs" : "keydown.tabs", function(event){
+			if (event.keyCode < $.ui.keyCode.PAGE_UP || event.keyCode > $.ui.keyCode.DOWN)
+				return;
+    	    var selectedIndex, goingForward = true;
+            switch (event.keyCode) {
+                case $.ui.keyCode.RIGHT: 
+                    event.preventDefault();
+                    selectedIndex = options.selected + 1; 
+                    break;
+                case $.ui.keyCode.DOWN: 
+                    selectedIndex = options.selected + 1;
+                    break;
+                case $.ui.keyCode.UP: 
+                    goingForward = false;
+                    selectedIndex = options.selected - 1;
+                    break;
+                case $.ui.keyCode.LEFT: 
+                    goingForward = false;
+                    selectedIndex = options.selected - 1;
+                    break;
+                case $.ui.keyCode.END: 
+                    selectedIndex = that.anchors.length - 1
+                    break;
+                case $.ui.keyCode.HOME: 
+                    goingForward = false;
+                    selectedIndex = 0;
+                    break;
+                case $.ui.keyCode.PAGE_UP:
+                	if (!event.ctrlKey)
+                		return;
+                    selectedIndex = options.selected + 1; 
+                    break;
+                case $.ui.keyCode.PAGE_DOWN:
+                	if (!event.ctrlKey)
+                		return;
+                    selectedIndex = options.selected - 1; 
+                    break;
+            }
+            event.preventDefault();
+            event.stopPropagation();
+            if (selectedIndex !== undefined) {
+            	selectedIndex = selectedIndex >= that.anchors.length ? 0 : selectedIndex < 0 ? that.anchors.length - 1 : selectedIndex;
+            	
+            	var indexIsAvailable = true;
+            	if ($.inArray( selectedIndex, options.disabled ) !== -1) {
+            		indexIsAvailable = false; 
+	            	for (var i = 0 ; i < that.anchors.length ; i++) {
+	            		selectedIndex = goingForward ? selectedIndex + 1 : selectedIndex - 1;
+	            		selectedIndex = selectedIndex >= that.anchors.length ? 0 : selectedIndex < 0 ? that.anchors.length - 1 : selectedIndex;
+	            		if ($.inArray( selectedIndex, options.disabled ) == -1)  {
+	            			indexIsAvailable = true
+	            			break;
+	            		}
+	            	}
+            	}
+            	if (indexIsAvailable) {
+	            	that.select(selectedIndex);
+	                that.anchors.eq(selectedIndex).focus();
+            	}
+            }
+            return false;
+		}); 
+		
+		this.panels.bind($.browser.mozilla ? "keypress.tabs" : "keydown.tabs", function(event){
+			if (!((event.keyCode == $.ui.keyCode.PAGE_UP || event.keyCode == $.ui.keyCode.PAGE_DOWN) && event.ctrlKey))
+				return;
+			var goingForward = event.keyCode == $.ui.keyCode.PAGE_UP;
+			var keyEvent = new $.Event($.browser.mozilla ? "keypress" : "keydown");
+			keyEvent.keyCode = goingForward ? $.ui.keyCode.RIGHT : $.ui.keyCode.LEFT;
+			that.active.trigger(keyEvent);
+            return false;
+		}); 
+		
 	},
 
 	_setOption: function( key, value ) {
@@ -201,7 +278,9 @@ $.widget( "ui.tabs", {
 			fragmentId = /^#.+/; // Safari 2 reports '#' for an empty hash
 
 		this.list = this.element.find( "ol,ul" ).eq( 0 );
+		this.list.attr("role", "tablist");
 		this.lis = $( " > li:has(a[href])", this.list );
+		this.lis.attr("role", "presentation");
 		this.anchors = this.lis.map(function() {
 			return $( "a", this )[ 0 ];
 		});
@@ -245,9 +324,11 @@ $.widget( "ui.tabs", {
 			}
 
 			if ( panel.length) {
+				panel.attr("role", "tabpanel").attr("aria-hidden", "true");
 				self.panels = self.panels.add( panel );
 			}
-			$( a ).attr( "aria-controls", selector.substring( 1 ) );
+			$( a ).attr( "aria-controls", selector.substring( 1 ) ).attr("role", "tab")
+				.attr("aria-expanded", "false").attr("aria-selected", "false").attr("tabindex", "-1");
 		});
 	},
 
@@ -281,8 +362,10 @@ $.widget( "ui.tabs", {
 
 	_showTab: function( event, eventData ) {
 		var that = this;
-
-		$( eventData.newTab ).closest( "li" ).addClass( "ui-tabs-active ui-state-active" );
+		eventData.newPanel.attr("aria-hidden", "false")
+		$( eventData.newTab )
+		.attr("aria-expanded", "true").attr("aria-selected", "true").attr("tabindex", "0")
+		.closest( "li" ).addClass( "ui-tabs-active ui-state-active" );
 
 		if ( that.showFx ) {
 			that.running = true;
@@ -303,12 +386,15 @@ $.widget( "ui.tabs", {
 	// TODO: combine with _showTab()
 	_hideTab: function( event, eventData ) {
 		var that = this;
-
+		eventData.oldTab.attr("aria-expanded", "false").attr("aria-selected", "false").attr("tabindex", "-1");
+		eventData.oldPanel.attr("aria-hidden", "true")
+		
 		if ( that.hideFx ) {
 			that.running = true;
 			eventData.oldPanel.animate( that.hideFx, that.hideFx.duration || "normal", function() {
 				that.running = false;
-				eventData.oldTab.closest( "li" ).removeClass( "ui-tabs-active ui-state-active" );
+				eventData.oldTab
+				.closest( "li" ).removeClass( "ui-tabs-active ui-state-active" );
 				that._resetStyle( $( this ), that.hideFx );
 				that.element.dequeue( "tabs" );
 				if ( !eventData.newPanel.length ) {
@@ -316,7 +402,8 @@ $.widget( "ui.tabs", {
 				}
 			});
 		} else {
-			eventData.oldTab.closest( "li" ).removeClass( "ui-tabs-active ui-state-active" );
+			eventData.oldTab
+			.closest( "li" ).removeClass( "ui-tabs-active ui-state-active" );
 			eventData.oldPanel.hide();
 			that.element.dequeue( "tabs" );
 			if ( !eventData.newPanel.length ) {
@@ -470,16 +557,18 @@ $.widget( "ui.tabs", {
 
 		this.element.removeClass( "ui-tabs ui-widget ui-widget-content ui-corner-all ui-tabs-collapsible" );
 
-		this.list.removeClass( "ui-tabs-nav ui-helper-reset ui-helper-clearfix ui-widget-header ui-corner-all" );
+		this.list.removeClass( "ui-tabs-nav ui-helper-reset ui-helper-clearfix ui-widget-header ui-corner-all" ).removeAttr("role").unbind(".tabs");
 
+		
 		this.anchors.each(function() {
-			var $this = $( this ).unbind( ".tabs" );
+			var $this = $( this ).unbind( ".tabs" ).removeAttr("role").removeAttr("aria-expanded")
+				.removeAttr("aria-selected").removeAttr("aria-controls").removeAttr("tabindex");
 			$.each( [ "href", "load" ], function( i, prefix ) {
 				$this.removeData( prefix + ".tabs" );
 			});
 		});
 
-		this.lis.unbind( ".tabs" ).add( this.panels ).each(function() {
+		this.lis.unbind( ".tabs" ).add( this.panels ).removeAttr("role").each(function() {
 			if ( $.data( this, "destroy.tabs" ) ) {
 				$( this ).remove();
 			} else {
@@ -495,6 +584,8 @@ $.widget( "ui.tabs", {
 				].join( " " ) );
 			}
 		});
+		
+		this.panels.show().removeAttr("aria-hidden").unbind(".tabs");
 
 		return this;
 	},
@@ -512,7 +603,7 @@ $.widget( "ui.tabs", {
 			return;
 		}
 
-		this.lis.eq( index ).removeClass( "ui-state-disabled" );
+		this.lis.eq( index ).removeClass( "ui-state-disabled" ).children("a:eq(0)").removeAttr("aria-disabled");
 		o.disabled = this.lis.map( function( i ) {
 			return $(this).is( ".ui-state-disabled" ) ? i : null;
 		}).get();
@@ -534,7 +625,7 @@ $.widget( "ui.tabs", {
 		index = this._getIndex( index );
 		var o = this.options;
 		if ( !o.disabled || ($.isArray( o.disabled ) && $.inArray( index, o.disabled ) == -1 ) ) {
-			this.lis.eq( index ).addClass( "ui-state-disabled" );
+			this.lis.eq( index ).addClass( "ui-state-disabled" ).children("a:eq(0)").attr("aria-disabled", "true");
 
 			o.disabled = this.lis.map( function( i ) {
 				return $(this).is( ".ui-state-disabled" ) ? i : null;
@@ -790,14 +881,15 @@ if ( $.uiBackCompat !== false ) {
 				$li = $( o.tabTemplate.replace( /#\{href\}/g, url ).replace( /#\{label\}/g, label ) ),
 				id = !url.indexOf( "#" ) ? url.replace( "#", "" ) : this._tabId( $( "a", $li )[ 0 ] );
 
-			$li.addClass( "ui-state-default ui-corner-top" ).data( "destroy.tabs", true );
+			$li.addClass( "ui-state-default ui-corner-top" ).data( "destroy.tabs", true);
 
 			// try to find an existing element before creating a new one
 			var $panel = self.element.find( "#" + id );
 			if ( !$panel.length ) {
 				$panel = self._createPanel( id );
 			}
-			$panel.addClass( "ui-tabs-panel ui-widget-content ui-corner-bottom" ).hide();
+			$panel.addClass( "ui-tabs-panel ui-widget-content ui-corner-bottom" ).hide()
+			.attr("aria-hidden", "true");
 
 			if ( index >= this.lis.length ) {
 				$li.appendTo( this.list );
@@ -816,7 +908,7 @@ if ( $.uiBackCompat !== false ) {
 			if ( this.anchors.length == 1 ) {
 				o.active = o.selected = 0;
 				$li.addClass( "ui-tabs-active ui-state-active" );
-				$panel.show();
+				$panel.show().attr("aria-hidden", "false");
 				this.element.queue( "tabs", function() {
 					self._trigger( "activate", null, self._ui( self.anchors[ 0 ], self.panels[ 0 ] ) );
 				});
