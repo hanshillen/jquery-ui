@@ -105,10 +105,10 @@ $.widget( "ui.tabs", {
 			this.active = this._findActive( options.active );
 			var panel = that._getPanelForTab( this.active );
 
-			panel.show().attr("aria-hidden", "false");
+			panel.show().attr("aria-hidden", "false").attr("aria-expanded", "true");
 
 			this.lis.eq( options.active ).addClass( "ui-tabs-active ui-state-active" )
-				.children("a").attr("aria-expanded", "true").attr("aria-selected", "true").attr("tabindex", "0")
+				.children("a").attr("aria-selected", "true").attr("tabindex", "0")
 			;
 
 			// TODO: we need to remove this or add it to accordion
@@ -324,11 +324,14 @@ $.widget( "ui.tabs", {
 			}
 
 			if ( panel.length) {
-				panel.attr("role", "tabpanel").attr("aria-hidden", "true");
+				panel.attr("role", "tabpanel").attr("aria-hidden", "true").attr("aria-expanded", "false");
 				self.panels = self.panels.add( panel );
 			}
 			$( a ).attr( "aria-controls", selector.substring( 1 ) ).attr("role", "tab")
-				.attr("aria-expanded", "false").attr("aria-selected", "false").attr("tabindex", "-1");
+				.attr("aria-selected", "false").attr("tabindex", "-1");
+			if (!a.id)
+				$(a).attr("id", self._tabId(a) + "-tab");
+			$("#" + $(a).attr("aria-controls")).attr("aria-labelledby", a.id);
 		});
 	},
 
@@ -362,9 +365,9 @@ $.widget( "ui.tabs", {
 
 	_showTab: function( event, eventData ) {
 		var that = this;
-		eventData.newPanel.attr("aria-hidden", "false")
+		eventData.newPanel.attr("aria-hidden", "false").attr("aria-expanded", "true");
 		$( eventData.newTab )
-		.attr("aria-expanded", "true").attr("aria-selected", "true").attr("tabindex", "0")
+		.attr("aria-selected", "true").attr("tabindex", "0")
 		.closest( "li" ).addClass( "ui-tabs-active ui-state-active" );
 
 		if ( that.showFx ) {
@@ -386,8 +389,8 @@ $.widget( "ui.tabs", {
 	// TODO: combine with _showTab()
 	_hideTab: function( event, eventData ) {
 		var that = this;
-		eventData.oldTab.attr("aria-expanded", "false").attr("aria-selected", "false").attr("tabindex", "-1");
-		eventData.oldPanel.attr("aria-hidden", "true")
+		eventData.oldTab.attr("aria-selected", "false").attr("tabindex", "-1");
+		eventData.oldPanel.attr("aria-hidden", "true").attr("aria-expanded", "false");
 		
 		if ( that.hideFx ) {
 			that.running = true;
@@ -561,7 +564,7 @@ $.widget( "ui.tabs", {
 
 		
 		this.anchors.each(function() {
-			var $this = $( this ).unbind( ".tabs" ).removeAttr("role").removeAttr("aria-expanded")
+			var $this = $( this ).unbind( ".tabs" ).removeAttr("role")
 				.removeAttr("aria-selected").removeAttr("aria-controls").removeAttr("tabindex");
 			$.each( [ "href", "load" ], function( i, prefix ) {
 				$this.removeData( prefix + ".tabs" );
@@ -585,7 +588,7 @@ $.widget( "ui.tabs", {
 			}
 		});
 		
-		this.panels.show().removeAttr("aria-hidden").unbind(".tabs");
+		this.panels.show().removeAttr("aria-hidden").removeAttr("aria-expanded").unbind(".tabs");
 
 		return this;
 	},
