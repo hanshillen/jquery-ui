@@ -30,7 +30,16 @@ $.widget( "ui.autocomplete", {
 			at: "left bottom",
 			collision: "none"
 		},
-		source: null
+		source: null,
+
+		// callbacks
+		change: null,
+		close: null,
+		focus: null,
+		open: null,
+		response: null,
+		search: null,
+		select: null
 	},
 
 	pending: 0,
@@ -53,6 +62,7 @@ $.widget( "ui.autocomplete", {
 			})
 			.bind( "keydown.autocomplete", function( event ) {
 				if ( self.options.disabled || self.element.attr( "readonly" ) ) {
+                    suppressKeyPress = true;
 					return;
 				}
 
@@ -60,17 +70,21 @@ $.widget( "ui.autocomplete", {
 				var keyCode = $.ui.keyCode;
 				switch( event.keyCode ) {
 				case keyCode.PAGE_UP:
+                    suppressKeyPress = true;
 					self._move( "previousPage", event );
 					break;
 				case keyCode.PAGE_DOWN:
+                    suppressKeyPress = true;
 					self._move( "nextPage", event );
 					break;
 				case keyCode.UP:
+                    suppressKeyPress = true;
 					self._move( "previous", event );
 					// prevent moving cursor to beginning of text field in some browsers
 					event.preventDefault();
 					break;
 				case keyCode.DOWN:
+                    suppressKeyPress = true;
 					self._move( "next", event );
 					// prevent moving cursor to end of text field in some browsers
 					event.preventDefault();
@@ -112,7 +126,29 @@ $.widget( "ui.autocomplete", {
 				if ( suppressKeyPress ) {
 					suppressKeyPress = false;
 					event.preventDefault();
+                    return;
 				}
+
+				// replicate some key handlers to allow them to repeat in Firefox and Opera
+				var keyCode = $.ui.keyCode;
+				switch( event.keyCode ) {
+				case keyCode.PAGE_UP:
+					self._move( "previousPage", event );
+					break;
+				case keyCode.PAGE_DOWN:
+					self._move( "nextPage", event );
+					break;
+				case keyCode.UP:
+					self._move( "previous", event );
+					// prevent moving cursor to beginning of text field in some browsers
+					event.preventDefault();
+					break;
+				case keyCode.DOWN:
+					self._move( "next", event );
+					// prevent moving cursor to end of text field in some browsers
+					event.preventDefault();
+					break;
+                }
 			})
 			.bind( "focus.autocomplete", function() {
 				if ( self.options.disabled ) {
@@ -329,6 +365,7 @@ $.widget( "ui.autocomplete", {
 			this.menu.element.hide();
 			this.menu.blur();
 			this._trigger( "close", event );
+			this.menu.isNewMenu = true;
 		}
 	},
 	
