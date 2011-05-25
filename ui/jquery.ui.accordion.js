@@ -25,7 +25,11 @@ $.widget( "ui.accordion", {
 		icons: {
 			activeHeader: "ui-icon-triangle-1-s",
 			header: "ui-icon-triangle-1-e"
-		}
+		},
+
+		// callbacks
+		activate: null,
+		beforeActivate: null
 	},
 
 	_create: function() {
@@ -482,9 +486,11 @@ $.extend( $.ui.accordion, {
 			$.each( fxAttrs, function( i, prop ) {
 				hideProps[ prop ] = "hide";
 
-				var parts = ( "" + $.css( options.toShow[0], prop ) ).match( /^([\d+-.]+)(.*)$/ );
+				var parts = ( "" + $.css( options.toShow[0], prop ) ).match( /^([\d+-.]+)(.*)$/ ),
+					// work around bug when a panel has no height - #7335
+					propVal = prop === "height" && parts[ 1 ] === "0" ? 1 : parts[ 1 ];
 				showProps[ prop ] = {
-					value: parts[ 1 ],
+					value: propVal,
 					unit: parts[ 2 ] || "px"
 				};
 			});
@@ -649,6 +655,11 @@ if ( $.uiBackCompat !== false ) {
 
 	// change events
 	(function( $, prototype ) {
+		$.extend( prototype.options, {
+			change: null,
+			changestart: null
+		});
+
 		var _trigger = prototype._trigger;
 		prototype._trigger = function( type, event, data ) {
 			var ret = _trigger.apply( this, arguments );

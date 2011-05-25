@@ -30,7 +30,16 @@ $.widget( "ui.autocomplete", {
 			at: "left bottom",
 			collision: "none"
 		},
-		source: null
+		source: null,
+
+		// callbacks
+		change: null,
+		close: null,
+		focus: null,
+		open: null,
+		response: null,
+		search: null,
+		select: null
 	},
 
 	pending: 0,
@@ -38,7 +47,8 @@ $.widget( "ui.autocomplete", {
 	_create: function() {
 		var self = this,
 			doc = this.element[ 0 ].ownerDocument,
-			suppressKeyPress;
+			suppressKeyPress,
+			suppressInput;
 
 		this.valueMethod = this.element[ this.element.is( "input" ) ? "val" : "text" ];
 
@@ -53,24 +63,31 @@ $.widget( "ui.autocomplete", {
 			})
 			.bind( "keydown.autocomplete", function( event ) {
 				if ( self.options.disabled || self.element.attr( "readonly" ) ) {
+                    suppressKeyPress = true;
+					suppressInput = true;
 					return;
 				}
 
 				suppressKeyPress = false;
+				suppressInput = false;
 				var keyCode = $.ui.keyCode;
 				switch( event.keyCode ) {
 				case keyCode.PAGE_UP:
+                    suppressKeyPress = true;
 					self._move( "previousPage", event );
 					break;
 				case keyCode.PAGE_DOWN:
+                    suppressKeyPress = true;
 					self._move( "nextPage", event );
 					break;
 				case keyCode.UP:
+                    suppressKeyPress = true;
 					self._move( "previous", event );
 					// prevent moving cursor to beginning of text field in some browsers
 					event.preventDefault();
 					break;
 				case keyCode.DOWN:
+                    suppressKeyPress = true;
 					self._move( "next", event );
 					// prevent moving cursor to end of text field in some browsers
 					event.preventDefault();
@@ -96,15 +113,8 @@ $.widget( "ui.autocomplete", {
 					self.close( event );
 					break;
 				default:
-					// keypress is triggered before the input value is changed
-					clearTimeout( self.searching );
-					self.searching = setTimeout(function() {
-						// only search if the value has changed
-						if ( self.term != self._value() ) {
-							self.selectedItem = null;
-							self.search( null, event );
-						}
-					}, self.options.delay );
+					// search timeout should be triggered before the input value is changed
+					self._searchTimeout( event );
 					break;
 				}
 			})
@@ -112,7 +122,37 @@ $.widget( "ui.autocomplete", {
 				if ( suppressKeyPress ) {
 					suppressKeyPress = false;
 					event.preventDefault();
+                    return;
 				}
+
+				// replicate some key handlers to allow them to repeat in Firefox and Opera
+				var keyCode = $.ui.keyCode;
+				switch( event.keyCode ) {
+				case keyCode.PAGE_UP:
+					self._move( "previousPage", event );
+					break;
+				case keyCode.PAGE_DOWN:
+					self._move( "nextPage", event );
+					break;
+				case keyCode.UP:
+					self._move( "previous", event );
+					// prevent moving cursor to beginning of text field in some browsers
+					event.preventDefault();
+					break;
+				case keyCode.DOWN:
+					self._move( "next", event );
+					// prevent moving cursor to end of text field in some browsers
+					event.preventDefault();
+					break;
+                }
+			})
+			.bind( "input.autocomplete", function(event) {
+				if ( suppressInput ) {
+					suppressInput = false;
+					event.preventDefault();
+					return;
+				}
+				self._searchTimeout( event );
 			})
 			.bind( "focus.autocomplete", function() {
 				if ( self.options.disabled ) {
@@ -279,6 +319,17 @@ $.widget( "ui.autocomplete", {
 		} else {
 			this.source = this.options.source;
 		}
+	},
+
+	_searchTimeout: function( event ) {
+		var self = this;
+		self.searching = setTimeout(function() {
+			// only search if the value has changed
+			if ( self.term != self.element.val() ) {
+				self.selectedItem = null;
+				self.search( null, event );
+			}
+		}, self.options.delay );
 	},
 
 	search: function( value, event ) {
