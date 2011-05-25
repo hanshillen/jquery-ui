@@ -109,6 +109,81 @@ $.widget( "ui.tabs", {
 		} else {
 			this.active = $();
 		}
+		
+		// keyboard
+		this.list.bind($.browser.mozilla ? "keypress.tabs" : "keydown.tabs", function(event){
+			if (event.keyCode < $.ui.keyCode.PAGE_UP || event.keyCode > $.ui.keyCode.DOWN)
+				return;
+    	    var selectedIndex, goingForward = true;
+            switch (event.keyCode) {
+                case $.ui.keyCode.RIGHT: 
+                    event.preventDefault();
+                    selectedIndex = options.selected + 1; 
+                    break;
+                case $.ui.keyCode.DOWN: 
+                    selectedIndex = options.selected + 1;
+                    break;
+                case $.ui.keyCode.UP: 
+                    goingForward = false;
+                    selectedIndex = options.selected - 1;
+                    break;
+                case $.ui.keyCode.LEFT: 
+                    goingForward = false;
+                    selectedIndex = options.selected - 1;
+                    break;
+                case $.ui.keyCode.END: 
+                    selectedIndex = that.anchors.length - 1
+                    break;
+                case $.ui.keyCode.HOME: 
+                    goingForward = false;
+                    selectedIndex = 0;
+                    break;
+                case $.ui.keyCode.PAGE_UP:
+                	if (!event.ctrlKey)
+                		return;
+                    selectedIndex = options.selected + 1; 
+                    break;
+                case $.ui.keyCode.PAGE_DOWN:
+                	if (!event.ctrlKey)
+                		return;
+                    selectedIndex = options.selected - 1; 
+                    break;
+            }
+            event.preventDefault();
+            event.stopPropagation();
+            if (selectedIndex !== undefined) {
+            	selectedIndex = selectedIndex >= that.anchors.length ? 0 : selectedIndex < 0 ? that.anchors.length - 1 : selectedIndex;
+            	
+            	var indexIsAvailable = true;
+            	if ($.inArray( selectedIndex, options.disabled ) !== -1) {
+            		indexIsAvailable = false; 
+	            	for (var i = 0 ; i < that.anchors.length ; i++) {
+	            		selectedIndex = goingForward ? selectedIndex + 1 : selectedIndex - 1;
+	            		selectedIndex = selectedIndex >= that.anchors.length ? 0 : selectedIndex < 0 ? that.anchors.length - 1 : selectedIndex;
+	            		if ($.inArray( selectedIndex, options.disabled ) == -1)  {
+	            			indexIsAvailable = true
+	            			break;
+	            		}
+	            	}
+            	}
+            	if (indexIsAvailable) {
+	            	that.select(selectedIndex);
+	                that.anchors.eq(selectedIndex).focus();
+            	}
+            }
+            return false;
+		}); 
+		
+		this.panels.bind($.browser.mozilla ? "keypress.tabs" : "keydown.tabs", function(event){
+			if (!((event.keyCode == $.ui.keyCode.PAGE_UP || event.keyCode == $.ui.keyCode.PAGE_DOWN) && event.ctrlKey))
+				return;
+			var goingForward = event.keyCode == $.ui.keyCode.PAGE_UP;
+			var keyEvent = new $.Event($.browser.mozilla ? "keypress" : "keydown");
+			keyEvent.keyCode = goingForward ? $.ui.keyCode.RIGHT : $.ui.keyCode.LEFT;
+			that.active.trigger(keyEvent);
+            return false;
+		}); 
+		
 	},
 
 	_setOption: function( key, value ) {
