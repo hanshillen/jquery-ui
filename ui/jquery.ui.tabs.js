@@ -94,7 +94,7 @@ $.widget( "ui.tabs", {
 		this._refresh();
 
 		// highlight selected tab
-		this.panels.hide();
+		this.panels.hide().attr("aria-hidden", "true");
 		this.lis.removeClass( "ui-tabs-active ui-state-active" );
 		// check for length avoids error when initializing empty list
 		if ( options.active !== false && this.anchors.length ) {
@@ -103,6 +103,8 @@ $.widget( "ui.tabs", {
 
 			panel.show();
 			this.lis.eq( options.active ).addClass( "ui-tabs-active ui-state-active" );
+			this.lis.eq( options.active ).addClass( "ui-tabs-active ui-state-active" )
+				.children("a").attr("aria-selected", "true").attr("tabindex", "0");
 			this.load( options.active );
 		} else {
 			this.active = $();
@@ -200,7 +202,9 @@ $.widget( "ui.tabs", {
 			fragmentId = /^#.+/; // Safari 2 reports '#' for an empty hash
 
 		this.list = this.element.find( "ol,ul" ).eq( 0 );
+		this.list.attr("role", "tablist");
 		this.lis = $( " > li:has(a[href])", this.list );
+		this.lis.attr("role", "presentation");
 		this.anchors = this.lis.map(function() {
 			return $( "a", this )[ 0 ];
 		});
@@ -244,9 +248,14 @@ $.widget( "ui.tabs", {
 			}
 
 			if ( panel.length) {
+				panel.attr("role", "tabpanel").attr("aria-hidden", "true").attr("aria-expanded", "false");
 				self.panels = self.panels.add( panel );
 			}
-			$( a ).attr( "aria-controls", selector.substring( 1 ) );
+			$( a ).attr( "aria-controls", selector.substring( 1 ) ).attr("role", "tab")
+				.attr("aria-selected", "false").attr("tabindex", "-1");
+			if (!a.id)
+				$(a).attr("id", self._tabId(a) + "-tab");
+			$("#" + $(a).attr("aria-controls")).attr("aria-labelledby", a.id);
 		});
 	},
 
@@ -267,8 +276,10 @@ $.widget( "ui.tabs", {
 		}
 
 		// disable tabs
+		var disabledValue;
 		for ( var i = 0, li; ( li = this.lis[ i ] ); i++ ) {
-			$( li ).toggleClass( "ui-state-disabled", ( disabled === true || $.inArray( i, disabled ) !== -1 ) );
+			disabledValue = disabled === true || $.inArray( i, disabled ) !== -1; 
+			$( li ).toggleClass( "ui-state-disabled", disabledValue).children('a').attr("aria-disabled", disabledValue.toString());
 		}
 
 		this.options.disabled = disabled;
@@ -376,11 +387,13 @@ $.widget( "ui.tabs", {
 		}
 
 		function show() {
-			eventData.newTab.closest( "li" ).addClass( "ui-tabs-active ui-state-active" );
-
+			eventData.newTab
+				.attr("aria-selected", "true").attr("tabindex", "0")
+				.closest( "li" ).addClass( "ui-tabs-active ui-state-active" );
+			toShow.attr("aria-hidden", "false").attr("aria-expanded", "true");
+			
 			if ( toShow.length && that.showFx ) {
-				toShow
-					.animate( that.showFx, that.showFx.duration || "normal", function() {
+				toShow.animate( that.showFx, that.showFx.duration || "normal", function() {
 						that._resetStyle( $( this ), that.showFx );
 						complete();
 					});
@@ -389,7 +402,10 @@ $.widget( "ui.tabs", {
 				complete();
 			}
 		}
-
+		
+		toHide.attr("aria-hidden", "true").attr("aria-expanded", "false");
+		eventData.oldTab.attr("aria-selected", "false").attr("tabindex", "-1");
+		
 		// start out by hiding, then showing, then completing
 		if ( toHide.length && that.hideFx ) {
 			toHide.animate( that.hideFx, that.hideFx.duration || "normal", function() {
@@ -446,16 +462,17 @@ $.widget( "ui.tabs", {
 
 		this.element.removeClass( "ui-tabs ui-widget ui-widget-content ui-corner-all ui-tabs-collapsible" );
 
-		this.list.removeClass( "ui-tabs-nav ui-helper-reset ui-helper-clearfix ui-widget-header ui-corner-all" );
+		this.list.removeClass( "ui-tabs-nav ui-helper-reset ui-helper-clearfix ui-widget-header ui-corner-all" ).removeAttr("role").unbind(".tabs");
 
 		this.anchors.each(function() {
-			var $this = $( this ).unbind( ".tabs" );
+			var $this = $( this ).unbind( ".tabs" ).removeAttr("role")
+				.removeAttr("aria-selected").removeAttr("aria-controls").removeAttr("tabindex");
 			$.each( [ "href", "load" ], function( i, prefix ) {
 				$this.removeData( prefix + ".tabs" );
 			});
 		});
 
-		this.lis.unbind( ".tabs" ).add( this.panels ).each(function() {
+		this.lis.unbind( ".tabs" ).add( this.panels ).removeAttr("role").each(function() {
 			if ( $.data( this, "destroy.tabs" ) ) {
 				$( this ).remove();
 			} else {
@@ -471,6 +488,8 @@ $.widget( "ui.tabs", {
 				].join( " " ) );
 			}
 		});
+		
+		this.panels.show().removeAttr("aria-hidden").removeAttr("aria-expanded").removeAttr("aria-labelledby").unbind(".tabs");
 
 		return this;
 	},
@@ -782,7 +801,8 @@ if ( $.uiBackCompat !== false ) {
 					panel.insertBefore( this.panels[ index ] );
 				}
 			}
-			panel.addClass( "ui-tabs-panel ui-widget-content ui-corner-bottom" ).hide();
+			panel.addClass( "ui-tabs-panel ui-widget-content ui-corner-bottom" ).hide()
+			.attr("aria-hidden", "true");
 
 			if ( doInsertAfter ) {
 				li.appendTo( this.list );
