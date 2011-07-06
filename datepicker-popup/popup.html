@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<script src="../jquery-1.5.1.js"></script>
+	<script src="../ui/jquery.ui.core.js"></script>
+	<script src="../ui/jquery.ui.widget.js"></script>
+	<script src="../ui/jquery.ui.button.js"></script>
+	<script src="../ui/jquery.ui.position.js"></script>
+	<script src="../ui/jquery.ui.popup.js"></script>
+	<script src="../ui/jquery.ui.menu.js"></script>
+	<script src="jquery.tmpl.js"></script>
+	<script src="../external/jquery.global.js"></script>
+	<script src="../external/jquery.global.de-DE.js"></script>
+	<script src="../external/jquery.global.ja-JP.js"></script>
+	<script src="localization.js"></script>
+	<script src="date.js"></script>
+	<script src="picker.js"></script>
+	<link rel="stylesheet" href="../themes/base/jquery.ui.all.css">
+	<title>jQuery UI Datepicker Rewrite</title>
+	<style>
+		body { font:62.5% Verdana,Arial,sans-serif; }
+		.ui-datepicker-multi-3 { width: 51em !important; }
+
+		.ui-datepicker-calendar a.ui-state-focus {
+			text-decoration: underline;
+		}
+
+		#calendarContainer {
+			width: 18em;
+		}
+
+		.ui-popup { position: absolute; z-index: 5000; }
+	</style>
+</head>
+<body>
+	<label for="popupDP1">Date of Birth</label>: <input id="popupDP1" type="text" />
+
+	<div id="calendarContainer">
+		<div id="popupCalendar1"></div>
+
+	</div>
+	<br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br />
+	<input id="inline-output" /><br /><br />
+	<div id="datepicker-inline-default"></div>
+
+
+	<script>
+		$( function() {
+			$( "#datepicker-inline-default" ).datepicker( {
+				select: function( event, ui ) {
+					$( "#inline-output" ).val( ui.date );
+				}
+			});
+
+			$( "#popupDP1" ).datepicker( {
+					select: function( event, ui ) {
+					$( "#popupDP1" ).val( ui.date ).focus( 1 );
+				}
+			});
+
+		});
+	</script>
+
+	<script id="ui-datepicker-tmpl" type="text/x-jquery-tmpl">
+		<div class="ui-datepicker ui-widget ui-widget-content ui-helper-clearfix ui-corner-all" role="region" aria-labelledby="${instance.id} + "-title"">
+			<div class="ui-datepicker-header ui-widget-header ui-helper-clearfix ui-corner-all">
+				<a href="#" class="ui-datepicker-prev ui-corner-all" title="${labels.prevText}"><span class="ui-icon ui-icon-circle-triangle-w">${labels.prevText}</span></a>
+				<a href="#" class="ui-datepicker-next ui-corner-all" title="${labels.nextText}"><span class="ui-icon ui-icon-circle-triangle-e">${labels.nextText}</span></a>
+				<div role="header" id="${instance.id} + "-title"" class="ui-datepicker-title" aria-live="assertive" aria-atomic="true">
+					<div id="${instance.id}-month-lbl">
+						<span class="ui-datepicker-month">${date.monthname()}</span> <span class="ui-datepicker-year">${date.year()}</span>
+					</div>
+					<span class="ui-helper-hidden-accessible">Date Picker</span>
+				</div>
+			</div>
+			<table class="ui-datepicker-calendar" role="grid" aria-labelledby="${instance.id}-month-lbl" tabindex="0" aria-activedescendant="${instance.id}-${instance.focusedDay}">
+				<thead role="presentation">
+					<tr role="row">
+						{{each(index, day) date.weekdays()}}
+							<th class="" role="columnheader" abbr="${day.fullname}" aria-label="${day.fullname}"><span title="${day.fullname}">${day.shortname}</span></th>
+						{{/each}}
+					</tr>
+				</thead>
+				<tbody role="presentation">
+					{{each(weekIndex, week) date.days()}}
+					<tr role="row">
+						{{each(dayIndex, day) week.days}}
+							<td {{if day.render}}id="${instance.id}-${day.date}"{{/if}} role="gridcell" aria-selected="{{if day.current}}true{{else}}false{{/if}}" {{if !day.selectable}}aria-disabled="true"{{/if}}>
+								{{if day.render}}
+									{{if day.selectable}}
+									<a title="${day.title}" class="{{if day.date == instance.focusedDay}}ui-state-focus {{/if}}ui-state-default{{if day.current}} ui-state-active{{/if}}{{if day.today}} ui-state-highlight{{/if}} ${day.extraClasses}" href="#" tabindex="-1" data-day=${day.date}>
+										${day.date}
+										{{if day.today}} <span class="ui-helper-hidden-accessible">, today</span>{{/if}}
+										{{if day.current}}<span class="ui-helper-hidden-accessible">, selected</span>{{/if}}
+									</a>
+									{{/if}}
+									{{if !day.selectable}}
+									<span title="${day.title}" class="{{if day.current}} ui-state-active{{/if}}{{if day.today}} ui-state-highlight{{/if}} ${day.extraClasses}">
+										${day.date}
+									</span>
+									{{/if}}
+								{{/if}}
+							</td>
+						{{/each}}
+					</tr>
+					{{/each}}
+				</tbody>
+			</table>
+			<div class="ui-datepicker-buttonpane ui-widget-content">
+				<button class="ui-datepicker-current">${labels.currentText}</button>
+				<button class="ui-datepicker-close">${labels.closeText}</button>
+			</div>
+		</div>
+	</script>
+</body>
+</html>
