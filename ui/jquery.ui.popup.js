@@ -50,6 +50,11 @@ $.widget( "ui.popup", {
 
 		this._bind(this.options.trigger, {
 			keydown: function( event ) {
+				if ( event.keyCode == $.ui.keyCode.TAB ) {
+					this.close( event );
+					return;
+				}
+
 				// prevent space-to-open to scroll the page, only happens for anchor ui.button
 				if ( this.options.trigger.is( "a:ui-button" ) && event.keyCode == $.ui.keyCode.SPACE ) {
 					event.preventDefault();
@@ -67,10 +72,11 @@ $.widget( "ui.popup", {
 					var that = this;
 					clearTimeout( this.closeTimer );
 					setTimeout(function() {
-						that.open( event, false );
+						that.open( event );
 						that.focusPopup();
 					}, 1);
 				}
+
 			},
 			click: function( event ) {
 				event.preventDefault();
