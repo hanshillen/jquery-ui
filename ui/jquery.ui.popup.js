@@ -17,6 +17,7 @@
 var idIncrement = 0;
 
 $.widget( "ui.popup", {
+	version: "@VERSION",
 	options: {
 		position: {
 			my: "left top",
@@ -62,24 +63,40 @@ $.widget( "ui.popup", {
 				if ( event.keyCode == $.ui.keyCode.DOWN ) {
 					// prevent scrolling
 					event.preventDefault();
-					this.options.trigger.trigger( "click", event );
+					//this.options.trigger.trigger( "click", event );
+					var that = this;
+					clearTimeout( this.closeTimer );
+					setTimeout(function() {
+						that.open( event, false );
+						that.focusPopup();
+					}, 1);
 				}
 			},
 			click: function( event ) {
 				event.preventDefault();
+				var noFocus = false;
+				//TODO: Be cleverer about when focus should not move when the popup opens
+				if ( $( event.target ).is( ":text" ) ) {
+					noFocus = true;
+				}
+
 				if (this.isOpen) {
 					// let it propagate to close
+
 					return;
 				}
 				var that = this;
 				clearTimeout( this.closeTimer );
 				setTimeout(function() {
-					that.open( event );
+					that.open( event);
+					if (!noFocus) {
+						that.focusPopup;
+					}
 				}, 1);
 			}
 		});
 
-		if ( !this.element.is( ":ui-menu" ) ) {
+		if ( !this.element.is( ":ui-menu" ) && !this.options.trigger.is( ":ui-datepicker" ) ) {
 			//default use case, wrap tab order in popup
 			this._bind({ keydown : function( event ) {
 					if ( event.keyCode !== $.ui.keyCode.TAB ) {
@@ -120,8 +137,7 @@ $.widget( "ui.popup", {
 			keyup: function( event ) {
 				if ( event.keyCode == $.ui.keyCode.ESCAPE && this.element.is( ":visible" ) ) {
 					this.close( event );
-					// TODO move this to close()? would allow menu.select to call popup.close, and get focus back to trigger
-					this.options.trigger.focus();
+					this.focusTrigger();
 				}
 			}
 		});
@@ -155,7 +171,7 @@ $.widget( "ui.popup", {
 		}
 	},
 
-	open: function( event ) {
+	open: function( event) {
 		var position = $.extend( {}, {
 			of: this.options.trigger
 		}, this.options.position );
@@ -166,9 +182,22 @@ $.widget( "ui.popup", {
 			.attr( "aria-expanded", true )
 			.position( position );
 
-		if (this.element.is( ":ui-menu" )) { //popup is a menu
+		if ( this.options.trigger.is( ":ui-datepicker" ) ) {
+			this.options.trigger.datepicker("open");
+		}
+
+		// take trigger out of tab order to allow shift-tab to skip trigger
+		this.options.trigger.attr( "tabindex", -1 );
+		this.isOpen = true;
+		this._trigger( "open", event );
+	},
+
+	focusPopup: function() {
+		if (this.element.is( ":ui-menu" )) {
+			//popup is a menu
 			this.element.menu( "focus", event, this.element.children( "li" ).first() );
-			this.element.focus();
+		} else if (this.options.trigger.is( ":ui-datepicker" )){
+			this.element.find(".ui-datepicker-calendar").focus( 1 );
 		} else {
 			// set focus to the first tabbable element in the popup container
 			// if there are no tabbable elements, set focus on the popup itself
@@ -181,13 +210,13 @@ $.widget( "ui.popup", {
 				}
 				tabbables = tabbables.add( this.element[ 0 ] );
 			}
+
 			tabbables.first().focus( 1 );
 		}
+	},
 
-		// take trigger out of tab order to allow shift-tab to skip trigger
-		this.options.trigger.attr( "tabindex", -1 );
-		this.isOpen = true;
-		this._trigger( "open", event );
+	focusTrigger: function() {
+		this.options.trigger.focus();
 	},
 
 	close: function( event ) {
