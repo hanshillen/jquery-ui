@@ -22,15 +22,7 @@ $.widget( "ui.datepicker", {
 		this.id = "ui-datepicker-" + idIncrement;
 		idIncrement++;
 		if ( this.element.is( "input" ) ) {
-			self._bind( {
-				click: "open",
-				// TODO click on picker should not close
-				blur: "close"
-			});
-			this.picker = $( "<div/>" ).insertAfter( this.element ).hide();
-			this.picker.css( {
-				position: "absolute"
-			});
+			this.picker = $( "<div/>" ).insertAfter( this.element ).popup();
 		} else {
 			this.inline = true;
 			this.picker = this.element;
@@ -49,16 +41,7 @@ $.widget( "ui.datepicker", {
 			event.preventDefault();
 			// TODO exclude clicks on lead days or handle them correctly
 			// TODO store/read more then just date, also required for multi month picker
-			self.date.setDay( +$( this ).text() ).select();
-			if ( !self.inline ) {
-				self.element.val( self.date.format() );
-				self.close();
-			} else {
-				self.refresh();
-			}
-			self._trigger( "select", event, {
-				date: self.date.format()
-			});
+			self.select( event, $( this ).data( "day" ) );
 		});
 
 		this.picker.delegate( ".ui-datepicker-header a, .ui-datepicker-calendar a", "mouseenter.datepicker mouseleave.datepicker", function() {
@@ -66,54 +49,59 @@ $.widget( "ui.datepicker", {
 		});
 
 
-		this.picker.delegate(".ui-datepicker-calendar", "keydown", function(event) {
+		this.picker.delegate( ".ui-datepicker-calendar", "keydown", function(event) {
 			if (jQuery.inArray(event.keyCode, [ 13, 33, 34, 35, 36, 37, 38, 39, 40]) == -1) {
-                return; //only interested navigation keys
+				//only interested navigation keys
+				return;
 			}
+			event.stopPropagation();
+			event.preventDefault();
+
 			var noDateChange = false,
 				activeCell = $( "#" + self.grid.attr( "aria-activedescendant" ) )
-				oldMonth = self.date.myMonth();
+				oldMonth = self.date.month();
 				oldYear = self.date.year();
 
 			switch ( event.keyCode ) {
-				case 13: // Enter
-					activeCell.children("a").first().click();
-					self.grid.focus(1);
+				case $.ui.keyCode.ENTER:
+					activeCell.children( "a" ).first().click();
+					self.grid.focus( 1 );
 					return;
 					break;
-				case 33: //PgUp
-					self.date.adjust(event.ctrlKey || event.metaKey ? "Y" : "M", 1);
+				case $.ui.keyCode.PAGE_UP:
+					self.date.adjust( event.ctrlKey || event.metaKey ? "Y" : "M", 1 );
 					break;
-				case 34: //PgDn
-					self.date.adjust(event.ctrlKey || event.metaKey ? "Y" : "M", -1);
+				case $.ui.keyCode.PAGE_DOWN:
+					self.date.adjust( event.ctrlKey || event.metaKey ? "Y" : "M", -1 );
 					break;
-				case 35: //End
-					self.date.setDay(self.date.daysInMonth());
+				case $.ui.keyCode.END:
+					self.date.setDay( self.date.daysInMonth() );
 					break;
-				case 36: //Home
-					self.date.setDay(1);
+				case $.ui.keyCode.HOME:
+					self.date.setDay( 1 );
 					break;
-				case 37: //Left
-					self.date.adjust("D", -1);
+				case $.ui.keyCode.LEFT:
+					self.date.adjust( "D", -1 );
 					break;
-				case 38: //Up
-					self.date.adjust("D", -7);
+				case $.ui.keyCode.UP:
+					self.date.adjust( "D", -7 );
 					break;
-				case 39: //Right
-					self.date.adjust("D", 1);
+				case $.ui.keyCode.RIGHT:
+					self.date.adjust( "D", 1 );
 					break;
-				case 40: //Down
-					self.date.adjust("D", 7);
+				case $.ui.keyCode.DOWN:
+					self.date.adjust( "D", 7 );
 					break;
+				default:
+					return;
 			}
 
-			if ( self.date.myMonth() != oldMonth || self.date.year() != oldYear ) {
+			if ( self.date.month() != oldMonth || self.date.year() != oldYear ) {
 				self.refresh();
 				self.grid.focus(1);
 			}
 			else {
 				var newId = self.id + "-" + self.date.day(),
-
 					newCell = $("#" + newId);
 
 				if ( !newCell.length ) {
@@ -124,8 +112,6 @@ $.widget( "ui.datepicker", {
 				activeCell.children("a").removeClass("ui-state-focus");
 				newCell.children("a").addClass("ui-state-focus");
 			}
-			event.stopPropagation();
-			event.preventDefault();
 		});
 
 		this.refresh();
@@ -153,14 +139,35 @@ $.widget( "ui.datepicker", {
 		this.grid = this.picker.find( ".ui-datepicker-calendar" );
 	},
 	open: function( event ) {
-		this.picker.fadeIn( "fast" );
-		
-		this.picker.position( $.extend( {
-			of: this.element
-		}, this.options.position ));
+		if ( !this.inline ) {
+			//TODO: Be more intelligent and elegant about extracting date from textfield
+			var units = this.element.val().split( "/" );
+			if ( units.length == 3 ) {
+				var day = units[1];
+				day = isNaN(day) ? this.date.day() : day;
+				var month = units[0];
+				month = isNaN(month) ? this.date.month() : month -1;
+				var year = units[2];
+				year = isNaN(year) ? this.date.year() : year;
+				this.date.setFullDate( year, month, day );
+				this.refresh();
+			}
+		}
 	},
 	close: function( event ) {
-		this.picker.fadeOut();
+		this.picker.popup( "close" );
+	},
+	select: function( event, day ) {
+		this.date.setDay( day ).select();
+		if ( !this.inline ) {
+			this.element.val( this.date.format() ).focus( 1 );
+			this.close();
+		} else {
+			this.refresh();
+		}
+		this._trigger( "select", event, {
+			date: this.date.format()
+		});
 	},
 	_destroy: function() {
 		if ( !this.inline ) {

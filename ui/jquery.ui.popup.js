@@ -51,6 +51,8 @@ $.widget( "ui.popup", {
 		this._bind(this.options.trigger, {
 			keydown: function( event ) {
 				if ( event.keyCode == $.ui.keyCode.TAB ) {
+					//TODO: Should tab always close the popup?
+					//TODO: Tab needs to pressed twice now to tab away from trigger
 					this.close( event );
 					return;
 				}
@@ -68,7 +70,6 @@ $.widget( "ui.popup", {
 				if ( event.keyCode == $.ui.keyCode.DOWN ) {
 					// prevent scrolling
 					event.preventDefault();
-					//this.options.trigger.trigger( "click", event );
 					var that = this;
 					clearTimeout( this.closeTimer );
 					setTimeout(function() {
@@ -94,8 +95,8 @@ $.widget( "ui.popup", {
 				var that = this;
 				clearTimeout( this.closeTimer );
 				setTimeout(function() {
-					that.open( event);
-					if (!noFocus) {
+					that.open( event );
+					if ( !noFocus ) {
 						that.focusPopup;
 					}
 				}, 1);
