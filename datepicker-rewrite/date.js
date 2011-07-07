@@ -30,9 +30,21 @@ $.date = function ( datestring, formatstring ) {
 			date = new Date( date.getFullYear(), date.getMonth(), day );
 			return this;
 		},
+		setMonth: function( month ) {
+			date = new Date( date.getFullYear(), month, date.getDate());
+			return this;
+		},
+		setYear: function( year ) {
+			date = new Date( year, date.getMonth(), date.getDate() );
+			return this;
+		},
+		setFullDate: function( year, month, day ) {
+			date = new Date( year, month, day );
+			return this;
+		},
 		adjust: function( period, offset ) {
-			var day = period == "D" ? date.getDate() + offset : date.getDate(), 
-				month = period == "M" ? date.getMonth() + offset : date.getMonth(), 
+			var day = period == "D" ? date.getDate() + offset : date.getDate(),
+				month = period == "M" ? date.getMonth() + offset : date.getMonth(),
 				year = period == "Y" ? date.getFullYear() + offset : date.getFullYear();
 
 			if ( period != "D" ) {
@@ -52,7 +64,7 @@ $.date = function ( datestring, formatstring ) {
 		day: function() {
 			return date.getDate();
 		},
-		myMonth: function() {
+		month: function() {
 			return date.getMonth();
 		},
 		year: function() {
@@ -72,6 +84,7 @@ $.date = function ( datestring, formatstring ) {
 		},
 		days: function() {
 			var result = [],
+				today = $.date(),
 				firstDayOfMonth = new Date( this.year(), date.getMonth(), 1 ).getDay(),
 				leadDays = ( firstDayOfMonth - calendar.firstDay + 7 ) % 7,
 				rows = Math.ceil( ( leadDays + this.daysInMonth() ) / 7),
@@ -151,7 +164,5 @@ $.date = function ( datestring, formatstring ) {
 		}
 	}
 }
-
-var today = $.date();
 
 }( jQuery ));
