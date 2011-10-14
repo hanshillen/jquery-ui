@@ -14,13 +14,14 @@
 (function( $ ) {
 
 $.widget( "ui.spinner", {
+	version: "@VERSION",
 	defaultElement: "<input>",
 	widgetEventPrefix: "spin",
 	options: {
 		incremental: true,
 		max: null,
 		min: null,
-		numberformat: null,
+		numberFormat: null,
 		page: 10,
 		step: null,
 		value: null
@@ -62,6 +63,7 @@ $.widget( "ui.spinner", {
 				// add buttons
 				.append( self._buttonHtml() )
 				// add behaviours
+				.disableSelection()
 				// TODO: user ._hoverable
 				.hover(function() {
 					if ( !options.disabled ) {
@@ -251,15 +253,32 @@ $.widget( "ui.spinner", {
 			this.counter > 20
 				? this.counter > 100
 					? this.counter > 200
-						? 100 
+						? 100
 						: 10
 					: 2
 				: 1);
+
+		// clamp the new value 
+		newVal = this._trimValue( newVal );
 
 		if ( this._trigger( "spin", event, { value: newVal } ) !== false) {
 			this.value( newVal );
 			this.counter++;
 		}
+	},
+
+	_trimValue: function( value ) {
+		var options = this.options;
+
+		if ( value > options.max) {
+			return options.max;
+		}
+
+		if ( value < options.min ) {
+			return options.min;
+		}
+
+		return value;
 	},
 
 	_stop: function( event ) {
@@ -278,13 +297,7 @@ $.widget( "ui.spinner", {
 
 	_setOption: function( key, value ) {
 		if ( key === "value") {
-			value = this._parse( value );
-			if ( value < this.options.min ) {
-				value = this.options.min;
-			}
-			if ( value > this.options.max ) {
-				value = this.options.max;
-			}
+			value = this._trimValue( this._parse(value) );
 		}
 
 		if ( key === "disabled" ) {
@@ -318,13 +331,13 @@ $.widget( "ui.spinner", {
 
 	_parse: function( val ) {
 		if ( typeof val === "string" ) {
-			val = $.global && this.options.numberformat ? $.global.parseFloat( val ) : +val;
+			val = $.global && this.options.numberFormat ? $.global.parseFloat( val ) : +val;
 		}
 		return isNaN( val ) ? null : val;
 	},
 
 	_format: function( num ) {
-		this.element.val( $.global && this.options.numberformat ? $.global.format( num, this.options.numberformat ) : num );
+		this.element.val( $.global && this.options.numberFormat ? $.global.format( num, this.options.numberFormat ) : num );
 	},
 
 	destroy: function() {
@@ -367,7 +380,5 @@ $.widget( "ui.spinner", {
 		return this.uiSpinner;
 	}
 });
-
-$.ui.spinner.version = "@VERSION";
 
 }( jQuery ) );

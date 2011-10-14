@@ -11,9 +11,15 @@ if ( typeof( $.global.culture ) == "undefined" ) {
 }
 
 $.date = function ( datestring, formatstring ) {
+	//TODO: Need to refactor $.date to be a constructor, move the methods to a prototype.
 	var calendar = $.global.culture.calendar,
 		format = formatstring ? formatstring : calendar.patterns.d,
 		date = datestring ? $.global.parseDate(datestring, format) : new Date();
+
+	if ( !date ) {
+		date = new Date()
+	}
+
 	return {
 		refresh: function() {
 			calendar = $.global.culture.calendar;
@@ -26,13 +32,34 @@ $.date = function ( datestring, formatstring ) {
 			}
 			return this;
 		},
+		//TODO: same as the underlying Date object's terminology, but still misleading.
+		//TODO: We can use .setTime() instead of new Date and rename to setTimestamp.
+		setTime: function( time ) {
+			date = new Date( time );
+			return this;
+		},
 		setDay: function( day ) {
 			date = new Date( date.getFullYear(), date.getMonth(), day );
 			return this;
 		},
+		setMonth: function( month ) {
+			//TODO: Should update this to keep the time component (hour, min, sec) intact. Same for setYear and setFullDate.
+			//TODO: Do we want to do any special handling when switching to a month that causes the days to overflow?
+			date = new Date( date.getFullYear(), month, date.getDate());
+			return this;
+		},
+		setYear: function( year ) {
+			//TODO: Same question as setMonth, but I suppose only for leap years.
+			date = new Date( year, date.getMonth(), date.getDate() );
+			return this;
+		},
+		setFullDate: function( year, month, day ) {
+			date = new Date( year, month, day );
+			return this;
+		},
 		adjust: function( period, offset ) {
-			var day = period == "D" ? date.getDate() + offset : date.getDate(), 
-				month = period == "M" ? date.getMonth() + offset : date.getMonth(), 
+			var day = period == "D" ? date.getDate() + offset : date.getDate(),
+				month = period == "M" ? date.getMonth() + offset : date.getMonth(),
 				year = period == "Y" ? date.getFullYear() + offset : date.getFullYear();
 
 			if ( period != "D" ) {
@@ -52,7 +79,7 @@ $.date = function ( datestring, formatstring ) {
 		day: function() {
 			return date.getDate();
 		},
-		myMonth: function() {
+		month: function() {
 			return date.getMonth();
 		},
 		year: function() {
@@ -72,6 +99,7 @@ $.date = function ( datestring, formatstring ) {
 		},
 		days: function() {
 			var result = [],
+				today = $.date(),
 				firstDayOfMonth = new Date( this.year(), date.getMonth(), 1 ).getDay(),
 				leadDays = ( firstDayOfMonth - calendar.firstDay + 7 ) % 7,
 				rows = Math.ceil( ( leadDays + this.daysInMonth() ) / 7),
@@ -85,6 +113,7 @@ $.date = function ( datestring, formatstring ) {
 					var day = week.days[ week.days.length ] = {
 						lead: printDate.getMonth() != date.getMonth(),
 						date: printDate.getDate(),
+						timestamp: printDate.getTime(),
 						current: this.selected && this.selected.equal( printDate ),
 						today: today.equal( printDate )
 					};
@@ -151,7 +180,5 @@ $.date = function ( datestring, formatstring ) {
 		}
 	}
 }
-
-var today = $.date();
 
 }( jQuery ));

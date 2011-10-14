@@ -10,6 +10,7 @@ $.widget( "ui.datepicker", {
 	options: {
 		eachDay: $.noop,
 		tmpl: "#ui-datepicker-tmpl",
+		gridTmpl: "#ui-datepicker-grid-tmpl",
 		position: {
 			my: "left top",
 			at: "left bottom"
@@ -22,14 +23,15 @@ $.widget( "ui.datepicker", {
 		this.id = "ui-datepicker-" + idIncrement;
 		idIncrement++;
 		if ( this.element.is( "input" ) ) {
-			self._bind( {
-				click: "open",
-				// TODO click on picker should not close
-				blur: "close"
-			});
-			this.picker = $( "<div/>" ).insertAfter( this.element ).hide();
-			this.picker.css( {
-				position: "absolute"
+			this.picker = $( "<div>" ).insertAfter( this.element ).popup({
+				managed: true,
+				expandOnFocus: true,
+				open: function( event, ui ) {
+					self.open( event );
+				},
+				focusPopup: function( event, ui ) {
+					self.grid.focus( 1 );
+				}
 			});
 		} else {
 			this.inline = true;
@@ -45,75 +47,70 @@ $.widget( "ui.datepicker", {
 			self.date.adjust( "M", 1 );
 			self.refresh();
 		});
-		this.picker.delegate( ".ui-datepicker-calendar a", "click", function( event ) {
+		this.picker.delegate( ".ui-datepicker-calendar a", "mousedown", function( event ) {
 			event.preventDefault();
 			// TODO exclude clicks on lead days or handle them correctly
 			// TODO store/read more then just date, also required for multi month picker
-			self.date.setDay( +$( this ).text() ).select();
-			if ( !self.inline ) {
-				self.element.val( self.date.format() );
-				self.close();
-			} else {
-				self.refresh();
-			}
-			self._trigger( "select", event, {
-				date: self.date.format()
-			});
+			self.select( event, $( this ).data( "timestamp" ) );
+			self.grid.focus( 1 );
 		});
 
 		this.picker.delegate( ".ui-datepicker-header a, .ui-datepicker-calendar a", "mouseenter.datepicker mouseleave.datepicker", function() {
 			$( this ).toggleClass( "ui-state-hover" );
 		});
 
-
-		this.picker.delegate(".ui-datepicker-calendar", "keydown", function(event) {
+		this.picker.delegate( ".ui-datepicker-calendar", "keydown.datepicker", function(event) {
 			if (jQuery.inArray(event.keyCode, [ 13, 33, 34, 35, 36, 37, 38, 39, 40]) == -1) {
-                return; //only interested navigation keys
+				//only interested navigation keys
+				return;
 			}
+			event.stopPropagation();
+			event.preventDefault();
+
 			var noDateChange = false,
 				activeCell = $( "#" + self.grid.attr( "aria-activedescendant" ) )
-				oldMonth = self.date.myMonth();
+				oldMonth = self.date.month();
 				oldYear = self.date.year();
 
 			switch ( event.keyCode ) {
-				case 13: // Enter
-					activeCell.children("a").first().click();
-					self.grid.focus(1);
+				case $.ui.keyCode.ENTER:
+					activeCell.children( "a:first" ).mousedown();
 					return;
 					break;
-				case 33: //PgUp
-					self.date.adjust(event.ctrlKey || event.metaKey ? "Y" : "M", 1);
+				case $.ui.keyCode.PAGE_UP:
+					self.date.adjust( event.altKey ? "Y" : "M", 1 );
 					break;
-				case 34: //PgDn
-					self.date.adjust(event.ctrlKey || event.metaKey ? "Y" : "M", -1);
+				case $.ui.keyCode.PAGE_DOWN:
+					self.date.adjust( event.altKey ? "Y" : "M", -1 );
 					break;
-				case 35: //End
-					self.date.setDay(self.date.daysInMonth());
+				case $.ui.keyCode.END:
+					self.date.setDay( self.date.daysInMonth() );
 					break;
-				case 36: //Home
-					self.date.setDay(1);
+				case $.ui.keyCode.HOME:
+					self.date.setDay( 1 );
 					break;
-				case 37: //Left
-					self.date.adjust("D", -1);
+				case $.ui.keyCode.LEFT:
+					self.date.adjust( "D", -1 );
 					break;
-				case 38: //Up
-					self.date.adjust("D", -7);
+				case $.ui.keyCode.UP:
+					self.date.adjust( "D", -7 );
 					break;
-				case 39: //Right
-					self.date.adjust("D", 1);
+				case $.ui.keyCode.RIGHT:
+					self.date.adjust( "D", 1 );
 					break;
-				case 40: //Down
-					self.date.adjust("D", 7);
+				case $.ui.keyCode.DOWN:
+					self.date.adjust( "D", 7 );
 					break;
+				default:
+					return;
 			}
 
-			if ( self.date.myMonth() != oldMonth || self.date.year() != oldYear ) {
+			if ( self.date.month() != oldMonth || self.date.year() != oldYear ) {
 				self.refresh();
-				self.grid.focus(1);
+				self.grid.focus( 1 );
 			}
 			else {
 				var newId = self.id + "-" + self.date.day(),
-
 					newCell = $("#" + newId);
 
 				if ( !newCell.length ) {
@@ -124,26 +121,22 @@ $.widget( "ui.datepicker", {
 				activeCell.children("a").removeClass("ui-state-focus");
 				newCell.children("a").addClass("ui-state-focus");
 			}
-			event.stopPropagation();
-			event.preventDefault();
 		});
 
-		this.refresh();
+		this.createTmpl();
 	},
-	refresh: function() {
+	createTmpl: function() {
 		this.date.refresh();
-		this.picker.empty();
-
-		//determine which day gridcell to focus after refresh
-		//TODO: Prevent disabled cells from being focused
-		var focusedDay = this.date.day();
 
 		$( this.options.tmpl ).tmpl( {
 			date: this.date,
 			labels: $.global.localize( "datepicker" ),
-			instance : {id : this.id, focusedDay : focusedDay}
+			instance: {
+				id: this.id,
+				focusedDay: this.date.day()
+			}
 		}).appendTo( this.picker )
-			.find( "button" ).button().end()
+			.find( "button" ).button().end();
 
 		if ( this.inline ) {
 			this.picker.children().addClass( "ui-datepicker-inline" );
@@ -152,15 +145,47 @@ $.widget( "ui.datepicker", {
 		this.picker.find( ".ui-datepicker" ).css( "display", "block" );
 		this.grid = this.picker.find( ".ui-datepicker-calendar" );
 	},
+	refresh: function() {
+		//determine which day gridcell to focus after refresh
+		//TODO: Prevent disabled cells from being focused
+		this.date.refresh();
+		$(".ui-datepicker-title", this.picker).html(
+			$("#ui-datepicker-title-tmpl").tmpl( {
+				date: this.date,
+		}));
+		var newGrid = $( this.options.gridTmpl ).tmpl( {
+			date: this.date,
+			labels: $.global.localize( "datepicker" ),
+			instance: {
+				id: this.id,
+				focusedDay: this.date.day()
+			}
+		});
+		this.grid = this.grid.replaceWith( newGrid );
+		this.grid = newGrid;
+	},
 	open: function( event ) {
-		this.picker.fadeIn( "fast" );
-		
-		this.picker.position( $.extend( {
-			of: this.element
-		}, this.options.position ));
+		if ( !this.inline ) {
+			this.date = $.date(this.element.val());
+			this.date.eachDay = this.options.eachDay;
+			this.date.select();
+			this.refresh();
+		}
 	},
 	close: function( event ) {
-		this.picker.fadeOut();
+		this.picker.popup( "close" );
+	},
+	select: function( event, time ) {
+		this.date.setTime( time ).select();
+		this.refresh();
+		if ( !this.inline ) {
+			this.element.val( this.date.format() );
+			this.picker.popup( "focusTrigger", event );
+			this.close();
+		}
+		this._trigger( "select", event, {
+			date: this.date.format()
+		});
 	},
 	_destroy: function() {
 		if ( !this.inline ) {
