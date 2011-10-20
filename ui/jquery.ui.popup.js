@@ -25,7 +25,15 @@ $.widget( "ui.popup", {
 			at: "left bottom"
 		},
 		managed: false,
-		expandOnFocus : false
+		expandOnFocus: false,
+		show: {
+			effect: "slideDown",
+			duration: "fast"
+		},
+		hide: {
+			effect: "fadeOut",
+			duration: "fast"
+		}
 	},
 	_create: function() {
 		if ( !this.options.trigger ) {
@@ -45,12 +53,13 @@ $.widget( "ui.popup", {
 		}
 
 		this.options.trigger
-			.attr( "aria-haspopup", true )
+			.attr( "aria-haspopup", "true" )
 			.attr( "aria-owns", this.element.attr( "id" ) );
 
 		this.element
-			.addClass( "ui-popup" )
-		this.close();
+			.addClass( "ui-popup" );
+		this._beforeClose();
+		this.element.hide();
 
 		this._bind(this.options.trigger, {
 			keydown: function( event ) {
@@ -67,15 +76,17 @@ $.widget( "ui.popup", {
 						break;
 					case $.ui.keyCode.SPACE:
 						// prevent space-to-open to scroll the page, only happens for anchor ui.button
+						// TODO check for $.ui.button before using custom selector, once more below
 						if ( this.options.trigger.is( "a:ui-button" ) ) {
 							event.preventDefault();
 						}
-						// TODO handle SPACE to open popup? only when not handled by ui.button
+
 						else if (this.options.trigger.is( "a:not(:ui-button)" ) ) {
 							this.options.trigger.trigger( "click", event );
 						}
 						break;
 					case $.ui.keyCode.DOWN:
+					case $.ui.keyCode.UP:
 						// prevent scrolling
 						event.preventDefault();
 						var that = this;
@@ -86,26 +97,27 @@ $.widget( "ui.popup", {
 						}, 1);
 						break;
 				}
-
 			},
 			click: function( event ) {
+				event.stopPropagation();
 				event.preventDefault();
+			},
+			mousedown: function( event ) {
 				var noFocus = false;
 				/* TODO: Determine in which cases focus should stay on the trigger after the popup opens
-				(should apply for any trigger that has other interaction besides opening the popup) */
+				(should apply for any trigger that has other interaction besides opening the popup, e.g. a text field) */
 				if ( $( event.target ).is( "input" ) ) {
 					noFocus = true;
 				}
-
 				if (this.isOpen) {
-					// let it propagate to close
-
+					suppressExpandOnFocus = true;
+					this.close();
 					return;
 				}
+				this.open( event );
 				var that = this;
 				clearTimeout( this.closeTimer );
-				setTimeout(function() {
-					that.open( event );
+				this._delay(function() {
 					if ( !noFocus ) {
 						that.focusPopup();
 					}
@@ -116,15 +128,20 @@ $.widget( "ui.popup", {
 		if ( this.options.expandOnFocus ) {
 			this._bind( this.options.trigger, {
 				focus : function( event ) {
-					if ( !this.isOpen && !suppressExpandOnFocus) {
+					if ( !suppressExpandOnFocus ) {
 						var that = this;
 						setTimeout(function() {
-							that.open( event );
+							if ( !that.isOpen ) {
+								that.open( event );
+							}
 						}, 1);
 					}
 					setTimeout(function() {
 						suppressExpandOnFocus = false;
 					}, 100);
+				},
+				blur: function( event ) {
+					suppressExpandOnFocus = false;
 				}
 			});
 		}
@@ -176,11 +193,11 @@ $.widget( "ui.popup", {
 
 		this._bind(document, {
 			click: function( event ) {
-				if ( this.isOpen && !$(event.target).closest(".ui-popup").length ) {
+				if ( this.isOpen && !$( event.target ).closest( this.element.add( this.options.trigger ) ).length ) {
 					this.close( event );
 				}
 			}
-		})
+		});
 	},
 
 	_destroy: function() {
@@ -208,10 +225,10 @@ $.widget( "ui.popup", {
 			of: this.options.trigger
 		}, this.options.position );
 
+		this._show( this.element, this.options.show );
 		this.element
-			.show()
-			.attr( "aria-hidden", false )
-			.attr( "aria-expanded", true )
+			.attr( "aria-hidden", "false" )
+			.attr( "aria-expanded", "true" )
 			.position( position );
 
 		// take trigger out of tab order to allow shift-tab to skip trigger
@@ -246,10 +263,8 @@ $.widget( "ui.popup", {
 	},
 
 	close: function( event ) {
-		this.element
-			.hide()
-			.attr( "aria-hidden", true )
-			.attr( "aria-expanded", false );
+		this._beforeClose();
+		this._hide( this.element, this.options.hide );
 
 		this.options.trigger.attr( "tabindex" , 0 );
 		if ( this.removeTabIndex ) {
@@ -257,6 +272,12 @@ $.widget( "ui.popup", {
 		}
 		this.isOpen = false;
 		this._trigger( "close", event );
+	},
+
+	_beforeClose: function() {
+		this.element
+			.attr( "aria-hidden", "true" )
+			.attr( "aria-expanded", "false" );
 	}
 });
 
