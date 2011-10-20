@@ -142,29 +142,6 @@ $.widget( "ui.datepicker", {
 		}
 		// against display:none in datepicker.css
 		this.picker.find( ".ui-datepicker" ).css( "display", "block" );
-		this.refreshGrid();
-	},
-	refreshGrid: function() {
-		//determine which day gridcell to focus after refresh
-		//TODO: Prevent disabled cells from being focused
-		this.date.refresh();
-		if ( this.grid ) {
-			this.grid.remove();
-		}
-		$(".ui-datepicker-title", this.picker).html(
-			$("#ui-datepicker-title-tmpl").tmpl( {
-				date: this.date,
-		}));
-		$( ".ui-datepicker-header", this.picker).first().after(
-			$( this.options.gridTmpl ).tmpl( {
-				date: this.date,
-				labels: $.global.localize( "datepicker" ),
-				instance : {
-					id : this.id,
-					focusedDay : this.date.day()
-				}
-			})
-		);
 		this.grid = this.picker.find( ".ui-datepicker-calendar" );
 	},
 	refresh: function() {
@@ -195,7 +172,19 @@ $.widget( "ui.datepicker", {
 		}
 	},
 	close: function( event ) {
-		this.picker.fadeOut();
+		this.picker.popup( "close" );
+	},
+	select: function( event, time ) {
+		this.date.setTime( time ).select();
+		this.refresh();
+		if ( !this.inline ) {
+			this.element.val( this.date.format() );
+			this.picker.popup( "focusTrigger", event );
+			this.close();
+		}
+		this._trigger( "select", event, {
+			date: this.date.format()
+		});
 	},
 	_destroy: function() {
 		if ( !this.inline ) {
