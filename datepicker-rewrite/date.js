@@ -16,10 +16,6 @@ $.date = function ( datestring, formatstring ) {
 		date = new Date()
 	}
 
-$.date = function ( datestring, formatstring ) {
-	var calendar = $.global.culture.calendar,
-		format = formatstring ? formatstring : calendar.patterns.d,
-		date = datestring ? $.global.parseDate(datestring, format) : new Date();
 	return {
 		refresh: function() {
 			calendar = Globalize.culture().calendar;
