@@ -121,7 +121,6 @@ $.widget( "ui.autocomplete", {
 					clearTimeout( self.screenReaderFeedback );
 
 					self.screenReaderFeedback = setTimeout(function() {
-    					console.log("bah %s %s", self.term, oldValue);
                         // only search if the value has changed
                         if ( self.term != oldValue ) {
                             var msg = ""
@@ -134,7 +133,6 @@ $.widget( "ui.autocomplete", {
                                 default: msg = self.lastResultsCount + " autocomplete options";
 							}
                             self.liveRegion.html(msg);
-                            console.log(self.liveRegion);
                         }
                     }, self.options.delay + 1000 );
 					break;
