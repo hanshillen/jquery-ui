@@ -114,8 +114,29 @@ $.widget( "ui.autocomplete", {
 					self.close( event );
 					break;
 				default:
+					var oldValue = self._value();
 					// search timeout should be triggered before the input value is changed
 					self._searchTimeout( event );
+
+					clearTimeout( self.screenReaderFeedback );
+
+					self.screenReaderFeedback = setTimeout(function() {
+    					console.log("bah %s %s", self.term, oldValue);
+                        // only search if the value has changed
+                        if ( self.term != oldValue ) {
+                            var msg = ""
+                            switch (self.lastResultsCount) {
+                            	//TODO: Localize these
+                                case 0: msg = "No autocomplete options";
+                                break;
+                                case 1: msg = "1 autocomplete option";
+								break;
+                                default: msg = self.lastResultsCount + " autocomplete options";
+							}
+                            self.liveRegion.html(msg);
+                            console.log(self.liveRegion);
+                        }
+                    }, self.options.delay + 1000 );
 					break;
 				}
 			})
@@ -175,6 +196,8 @@ $.widget( "ui.autocomplete", {
 					self._change( event );
 				}, 150 );
 			});
+
+        this.liveRegion = this.element.after("<span role='status' class='ui-helper-hidden-accessible' aria-live='polite'></span>").next();
 		this._initSource();
 		this.response = function() {
 			return self._response.apply( self, arguments );
@@ -366,8 +389,11 @@ $.widget( "ui.autocomplete", {
 		if ( !this.options.disabled && content && content.length ) {
 			this._suggest( content );
 			this._trigger( "open" );
+
+            this.lastResultsCount = content.length;
 		} else {
 			this.close();
+            this.lastResultsCount = 0;
 		}
 		this.pending--;
 		if ( !this.pending ) {
@@ -383,7 +409,7 @@ $.widget( "ui.autocomplete", {
 			this._trigger( "close", event );
 		}
 	},
-	
+
 	_change: function( event ) {
 		if ( this.previous !== this._value() ) {
 			this._trigger( "change", event, { item: this.selectedItem } );
@@ -464,6 +490,9 @@ $.widget( "ui.autocomplete", {
 			return;
 		}
 		this.menu[ direction ]( event );
+        var selectedItem = $(this.menu.element).find("a.ui-state-hover:eq(0)");
+        if (selectedItem.length > 0)
+            this.liveRegion.html(selectedItem.text());
 	},
 
 	widget: function() {
