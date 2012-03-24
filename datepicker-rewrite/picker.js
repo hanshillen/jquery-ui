@@ -73,7 +73,7 @@ $.widget( "ui.datepicker", {
 
 			switch ( event.keyCode ) {
 				case $.ui.keyCode.ENTER:
-					activeCell.children( "a:first" ).mousedown();
+					that.select( event, activeCell.children( "a:first" ).data( "timestamp" ) );
 					return;
 					break;
 				case $.ui.keyCode.PAGE_UP:
