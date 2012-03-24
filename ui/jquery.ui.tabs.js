@@ -120,54 +120,54 @@ $.widget( "ui.tabs", {
 		} else {
 			this.active = $();
 		}
-		
+
 		// keyboard
 		this.list.bind($.browser.mozilla ? "keypress.tabs" : "keydown.tabs", function(event){
 			if (event.keyCode < $.ui.keyCode.PAGE_UP || event.keyCode > $.ui.keyCode.DOWN)
 				return;
     	    var selectedIndex, goingForward = true;
             switch (event.keyCode) {
-                case $.ui.keyCode.RIGHT: 
+                case $.ui.keyCode.RIGHT:
                     event.preventDefault();
-                    selectedIndex = options.selected + 1; 
-                    break;
-                case $.ui.keyCode.DOWN: 
                     selectedIndex = options.selected + 1;
                     break;
-                case $.ui.keyCode.UP: 
+                case $.ui.keyCode.DOWN:
+                    selectedIndex = options.selected + 1;
+                    break;
+                case $.ui.keyCode.UP:
                     goingForward = false;
                     selectedIndex = options.selected - 1;
                     break;
-                case $.ui.keyCode.LEFT: 
+                case $.ui.keyCode.LEFT:
                     goingForward = false;
                     selectedIndex = options.selected - 1;
                     break;
-                case $.ui.keyCode.END: 
+                case $.ui.keyCode.END:
                     selectedIndex = that.anchors.length - 1
                     break;
-                case $.ui.keyCode.HOME: 
+                case $.ui.keyCode.HOME:
                     goingForward = false;
                     selectedIndex = 0;
                     break;
                 case $.ui.keyCode.PAGE_UP:
                 	if (!event.ctrlKey)
                 		return;
-                    selectedIndex = options.selected + 1; 
+                    selectedIndex = options.selected + 1;
                     break;
                 case $.ui.keyCode.PAGE_DOWN:
                 	if (!event.ctrlKey)
                 		return;
-                    selectedIndex = options.selected - 1; 
+                    selectedIndex = options.selected - 1;
                     break;
             }
             event.preventDefault();
             event.stopPropagation();
             if (selectedIndex !== undefined) {
             	selectedIndex = selectedIndex >= that.anchors.length ? 0 : selectedIndex < 0 ? that.anchors.length - 1 : selectedIndex;
-            	
+
             	var indexIsAvailable = true;
             	if ($.inArray( selectedIndex, options.disabled ) !== -1) {
-            		indexIsAvailable = false; 
+            		indexIsAvailable = false;
 	            	for (var i = 0 ; i < that.anchors.length ; i++) {
 	            		selectedIndex = goingForward ? selectedIndex + 1 : selectedIndex - 1;
 	            		selectedIndex = selectedIndex >= that.anchors.length ? 0 : selectedIndex < 0 ? that.anchors.length - 1 : selectedIndex;
@@ -183,8 +183,8 @@ $.widget( "ui.tabs", {
             	}
             }
             return false;
-		}); 
-		
+		});
+
 		this.panels.bind($.browser.mozilla ? "keypress.tabs" : "keydown.tabs", function(event){
 			if (!((event.keyCode == $.ui.keyCode.PAGE_UP || event.keyCode == $.ui.keyCode.PAGE_DOWN) && event.ctrlKey))
 				return;
@@ -193,8 +193,8 @@ $.widget( "ui.tabs", {
 			keyEvent.keyCode = goingForward ? $.ui.keyCode.RIGHT : $.ui.keyCode.LEFT;
 			that.active.trigger(keyEvent);
             return false;
-		}); 
-		
+		});
+
 	},
 
 	_getCreateEventData: function() {
@@ -293,12 +293,9 @@ $.widget( "ui.tabs", {
 	_processTabs: function() {
 		var self = this;
 
-<<<<<<< HEAD
-		this.list = this.element.find( "ol,ul" ).eq( 0 );
-		this.list.attr("role", "tablist");
-=======
 		this.list = this._getList();
->>>>>>> accordion-hh
+		this.list.attr("role", "tablist");
+
 		this.lis = $( " > li:has(a[href])", this.list );
 		this.lis.attr("role", "presentation");
 		this.anchors = this.lis.map(function() {
@@ -360,7 +357,7 @@ $.widget( "ui.tabs", {
 		// disable tabs
 		var disabledValue;
 		for ( var i = 0, li; ( li = this.lis[ i ] ); i++ ) {
-			disabledValue = disabled === true || $.inArray( i, disabled ) !== -1; 
+			disabledValue = disabled === true || $.inArray( i, disabled ) !== -1;
 			$( li ).toggleClass( "ui-state-disabled", disabledValue).children('a').attr("aria-disabled", disabledValue.toString());
 		}
 
@@ -473,7 +470,7 @@ $.widget( "ui.tabs", {
 				.attr("aria-selected", "true").attr("tabindex", "0")
 				.closest( "li" ).addClass( "ui-tabs-active ui-state-active" );
 			toShow.attr("aria-hidden", "false").attr("aria-expanded", "true");
-			
+
 			if ( toShow.length && that.showFx ) {
 				toShow.animate( that.showFx, that.showFx.duration || "normal", function() {
 						that._resetStyle( $( this ), that.showFx );
@@ -484,10 +481,10 @@ $.widget( "ui.tabs", {
 				complete();
 			}
 		}
-		
+
 		toHide.attr("aria-hidden", "true").attr("aria-expanded", "false");
 		eventData.oldTab.attr("aria-selected", "false").attr("tabindex", "-1");
-		
+
 		// start out by hiding, then showing, then completing
 		if ( toHide.length && that.hideFx ) {
 			toHide.animate( that.hideFx, that.hideFx.duration || "normal", function() {
@@ -579,7 +576,7 @@ $.widget( "ui.tabs", {
 				].join( " " ) );
 			}
 		});
-		
+
 		this.panels.show().removeAttr("aria-hidden").removeAttr("aria-expanded").removeAttr("aria-labelledby").unbind(".tabs");
 
 		return this;
