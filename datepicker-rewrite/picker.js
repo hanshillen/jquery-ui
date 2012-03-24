@@ -17,20 +17,20 @@ $.widget( "ui.datepicker", {
 		}
 	},
 	_create: function() {
-		var self = this;
+		var that = this;
 		this.date = $.date();
 		this.date.eachDay = this.options.eachDay;
 		this.id = "ui-datepicker-" + idIncrement;
 		idIncrement++;
 		if ( this.element.is( "input" ) ) {
-			this.picker = $( "<div/>" ).insertAfter( this.element ).popup({
-				managed : true,
-				expandOnFocus : true,
-				open : function( event, ui ) {
-					self.open( event );
+			this.picker = $( "<div>" ).insertAfter( this.element ).popup({
+				managed: true,
+				expandOnFocus: true,
+				open: function( event, ui ) {
+					that.open( event );
 				},
-				focusPopup : function( event, ui ) {
-					self.grid.focus( 1 );
+				focusPopup: function( event, ui ) {
+					that.grid.focus( 1 );
 				}
 			});
 		} else {
@@ -39,20 +39,20 @@ $.widget( "ui.datepicker", {
 		}
 		this.picker.delegate( ".ui-datepicker-prev", "click", function( event ) {
 			event.preventDefault();
-			self.date.adjust( "M", -1 );
-			self.refreshGrid();
+			that.date.adjust( "M", -1 );
+			that.refresh();
 		});
 		this.picker.delegate( ".ui-datepicker-next", "click", function( event ) {
 			event.preventDefault();
-			self.date.adjust( "M", 1 );
-			self.refreshGrid();
+			that.date.adjust( "M", 1 );
+			that.refresh();
 		});
 		this.picker.delegate( ".ui-datepicker-calendar a", "mousedown", function( event ) {
 			event.preventDefault();
 			// TODO exclude clicks on lead days or handle them correctly
 			// TODO store/read more then just date, also required for multi month picker
-			self.select( event, $( this ).data( "date" ) );
-			self.grid.focus( 1 );
+			that.select( event, $( this ).data( "timestamp" ) );
+			that.grid.focus( 1 );
 		});
 
 		this.picker.delegate( ".ui-datepicker-header a, .ui-datepicker-calendar a", "mouseenter.datepicker mouseleave.datepicker", function() {
@@ -67,56 +67,55 @@ $.widget( "ui.datepicker", {
 			event.stopPropagation();
 			event.preventDefault();
 
-			var noDateChange = false,
-				activeCell = $( "#" + self.grid.attr( "aria-activedescendant" ) )
-				oldMonth = self.date.month();
-				oldYear = self.date.year();
+			var activeCell = $( "#" + that.grid.attr( "aria-activedescendant" ) ),
+				oldMonth = that.date.month(),
+				oldYear = that.date.year();
 
 			switch ( event.keyCode ) {
 				case $.ui.keyCode.ENTER:
-					activeCell.children( "a" ).first().mousedown();
+					activeCell.children( "a:first" ).mousedown();
 					return;
 					break;
 				case $.ui.keyCode.PAGE_UP:
-					self.date.adjust( event.altKey ? "Y" : "M", 1 );
+					that.date.adjust( event.altKey ? "Y" : "M", 1 );
 					break;
 				case $.ui.keyCode.PAGE_DOWN:
-					self.date.adjust( event.altKey ? "Y" : "M", -1 );
+					that.date.adjust( event.altKey ? "Y" : "M", -1 );
 					break;
 				case $.ui.keyCode.END:
-					self.date.setDay( self.date.daysInMonth() );
+					that.date.setDay( that.date.daysInMonth() );
 					break;
 				case $.ui.keyCode.HOME:
-					self.date.setDay( 1 );
+					that.date.setDay( 1 );
 					break;
 				case $.ui.keyCode.LEFT:
-					self.date.adjust( "D", -1 );
+					that.date.adjust( "D", -1 );
 					break;
 				case $.ui.keyCode.UP:
-					self.date.adjust( "D", -7 );
+					that.date.adjust( "D", -7 );
 					break;
 				case $.ui.keyCode.RIGHT:
-					self.date.adjust( "D", 1 );
+					that.date.adjust( "D", 1 );
 					break;
 				case $.ui.keyCode.DOWN:
-					self.date.adjust( "D", 7 );
+					that.date.adjust( "D", 7 );
 					break;
 				default:
 					return;
 			}
 
-			if ( self.date.month() != oldMonth || self.date.year() != oldYear ) {
-				self.refreshGrid();
-				self.grid.focus( 1 );
+			if ( that.date.month() != oldMonth || that.date.year() != oldYear ) {
+				that.refresh();
+				that.grid.focus( 1 );
 			}
 			else {
-				var newId = self.id + "-" + self.date.day(),
+				var newId = that.id + "-" + that.date.day(),
 					newCell = $("#" + newId);
 
 				if ( !newCell.length ) {
 					return;
 				}
-				self.grid.attr("aria-activedescendant", newId);
+				that.grid.attr("aria-activedescendant", newId);
 
 				activeCell.children("a").removeClass("ui-state-focus");
 				newCell.children("a").addClass("ui-state-focus");
@@ -130,10 +129,10 @@ $.widget( "ui.datepicker", {
 
 		$( this.options.tmpl ).tmpl( {
 			date: this.date,
-			labels: $.global.localize( "datepicker" ),
-			instance : {
-				id : this.id,
-				focusedDay : this.date.day()
+			labels: Globalize.localize( "datepicker" ),
+			instance: {
+				id: this.id,
+				focusedDay: this.date.day()
 			}
 		}).appendTo( this.picker )
 			.find( "button" ).button().end();
@@ -143,37 +142,33 @@ $.widget( "ui.datepicker", {
 		}
 		// against display:none in datepicker.css
 		this.picker.find( ".ui-datepicker" ).css( "display", "block" );
-		this.refreshGrid();
+		this.grid = this.picker.find( ".ui-datepicker-calendar" );
 	},
-	refreshGrid: function() {
+	refresh: function() {
 		//determine which day gridcell to focus after refresh
 		//TODO: Prevent disabled cells from being focused
 		this.date.refresh();
-		if ( this.grid ) {
-			this.grid.remove();
-		}
 		$(".ui-datepicker-title", this.picker).html(
 			$("#ui-datepicker-title-tmpl").tmpl( {
-				date: this.date,
+				date: this.date
 		}));
-		$( ".ui-datepicker-header", this.picker).first().after(
-			$( this.options.gridTmpl ).tmpl( {
-				date: this.date,
-				labels: $.global.localize( "datepicker" ),
-				instance : {
-					id : this.id,
-					focusedDay : this.date.day()
-				}
-			})
-		);
-		this.grid = this.picker.find( ".ui-datepicker-calendar" );
+		var newGrid = $( this.options.gridTmpl ).tmpl( {
+			date: this.date,
+			labels: Globalize.localize( "datepicker" ),
+			instance: {
+				id: this.id,
+				focusedDay: this.date.day()
+			}
+		});
+		this.grid = this.grid.replaceWith( newGrid );
+		this.grid = newGrid;
 	},
 	open: function( event ) {
 		if ( !this.inline ) {
-			this.date = $.date(this.element.val());
+			this.date = $.date( this.element.val() );
 			this.date.eachDay = this.options.eachDay;
 			this.date.select();
-			this.refreshGrid();
+			this.refresh();
 		}
 	},
 	close: function( event ) {
@@ -181,7 +176,7 @@ $.widget( "ui.datepicker", {
 	},
 	select: function( event, time ) {
 		this.date.setTime( time ).select();
-		this.refreshGrid();
+		this.refresh();
 		if ( !this.inline ) {
 			this.element.val( this.date.format() );
 			this.picker.popup( "focusTrigger", event );
