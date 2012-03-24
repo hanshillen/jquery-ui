@@ -561,7 +561,6 @@ $.widget( "ui.tabs", {
 
 		this.lis.unbind( ".tabs" ).add( this.panels ).each(function() {
 			if ( $.data( this, "ui-tabs-destroy" ) ) {
->>>>>>> accordion-hh
 				$( this ).remove();
 			} else {
 				$( this ).removeClass([
