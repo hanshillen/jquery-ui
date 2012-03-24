@@ -1,7 +1,7 @@
 /*
  * jQuery UI Slider @VERSION
  *
- * Copyright 2011, AUTHORS.txt (http://jqueryui.com/about)
+ * Copyright 2012, AUTHORS.txt (http://jqueryui.com/about)
  * Dual licensed under the MIT or GPL Version 2 licenses.
  * http://jquery.org/license
  *
@@ -76,7 +76,7 @@ $.widget( "ui.slider", $.ui.mouse, {
 				.addClass( "ui-slider-range" +
 				// note: this isn't the most fittingly semantic framework class for this element,
 				// but worked best visually with a variety of themes
-				" ui-widget-header" + 
+				" ui-widget-header" +
 				( ( o.range === "min" || o.range === "max" ) ? " ui-slider-range-" + o.range : "" ) );
 		}
 
@@ -112,15 +112,14 @@ $.widget( "ui.slider", $.ui.mouse, {
 			});
 
 		this.handles.each(function( i ) {
-			$( this ).data( "index.ui-slider-handle", i ).attr("aria-valuenow", o.values ? o.values[i] : o.value);
+			$( this ).data( "ui-slider-handle-index", i ).attr("aria-valuenow", o.values ? o.values[i] : o.value);
             if (self.options.unittext)
                 $(this).data("index.ui-slider-handle", i).attr("aria-valuetext", (o.values ? o.values[i] : o.value) + " " + self.options.unittext);
         });
 
 		this.handles
 			.keydown(function( event ) {
-				var ret = true,
-					index = $( this ).data( "index.ui-slider-handle" ),
+				var index = $( this ).data( "ui-slider-handle-index" ),
 					allowed,
 					curVal,
 					newVal,
@@ -139,7 +138,7 @@ $.widget( "ui.slider", $.ui.mouse, {
 					case $.ui.keyCode.RIGHT:
 					case $.ui.keyCode.DOWN:
 					case $.ui.keyCode.LEFT:
-						ret = false;
+						event.preventDefault();
 						if ( !self._keySliding ) {
 							self._keySliding = true;
 							$( this ).addClass( "ui-state-active" );
@@ -188,12 +187,9 @@ $.widget( "ui.slider", $.ui.mouse, {
 				}
 
 				self._slide( event, index, newVal );
-
-				return ret;
-
 			})
 			.keyup(function( event ) {
-				var index = $( this ).data( "index.ui-slider-handle" );
+				var index = $( this ).data( "ui-slider-handle-index" );
 
 				if ( self._keySliding ) {
 					self._keySliding = false;
@@ -545,10 +541,10 @@ $.widget( "ui.slider", $.ui.mouse, {
 				if ( value ) {
 					this.handles.filter( ".ui-state-focus" ).blur();
 					this.handles.removeClass( "ui-state-hover" );
-					this.handles.attr( "disabled", "disabled" );
+					this.handles.prop( "disabled", true );
 					this.element.addClass( "ui-disabled" );
 				} else {
-					this.handles.removeAttr( "disabled" );
+					this.handles.prop( "disabled", false );
 					this.element.removeClass( "ui-disabled" );
 				}
 				break;

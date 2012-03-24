@@ -1,6 +1,6 @@
 (function( $ ) {
 
-module( "accordion: options", accordionSetupTeardown() );
+module( "accordion: options", accordion_setupTeardown() );
 
 test( "{ active: default }", function() {
 	expect( 2 );
@@ -152,6 +152,7 @@ test( "{ event: custom }", function() {
 
 	// ensure old event handlers are unbound
 	element.find( ".ui-accordion-header" ).eq( 1 ).trigger( "custom1" );
+	element.find( ".ui-accordion-header" ).eq( 1 ).trigger( "custom2" );
 	equal( element.accordion( "option", "active" ), 2 );
 	accordion_state( element, 0, 0, 1 );
 
@@ -255,7 +256,7 @@ test( "{ icons: false }", function() {
 	var element = $( "#list1" );
 	function icons( on ) {
 		deepEqual( element.find( "span.ui-icon").length, on ? 3 : 0 );
-		deepEqual( element.hasClass( "ui-accordion-icons" ), on );
+		deepEqual( element.find( ".ui-accordion-header.ui-accordion-icons" ).length, on ? 3 : 0 );
 	}
 	element.accordion();
 	icons( true );
