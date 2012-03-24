@@ -113,7 +113,6 @@ $.widget( "ui.tabs", {
 			var panel = that._getPanelForTab( this.active );
 
 			panel.show();
-			this.lis.eq( options.active ).addClass( "ui-tabs-active ui-state-active" );
 			this.lis.eq( options.active ).addClass( "ui-tabs-active ui-state-active" )
 				.children("a").attr("aria-selected", "true").attr("tabindex", "0");
 			this.load( options.active );
@@ -295,7 +294,6 @@ $.widget( "ui.tabs", {
 
 		this.list = this._getList();
 		this.list.attr("role", "tablist");
-
 		this.lis = $( " > li:has(a[href])", this.list );
 		this.lis.attr("role", "presentation");
 		this.anchors = this.lis.map(function() {
@@ -322,11 +320,15 @@ $.widget( "ui.tabs", {
 			}
 
 			if ( panel.length) {
-				panel.attr("role", "tabpanel").attr("aria-hidden", "true").attr("aria-expanded", "false");
+				panel.attr("role", "tabpanel")
+					.attr("aria-hidden", "true")
+					.attr("aria-expanded", "false");
 				self.panels = self.panels.add( panel );
 			}
-			$( a ).attr( "aria-controls", selector.substring( 1 ) ).attr("role", "tab")
-				.attr("aria-selected", "false").attr("tabindex", "-1");
+			$( a ).attr( "aria-controls", selector.substring( 1 ) )
+				.attr("role", "tab")
+				.attr("aria-selected", "false")
+				.attr("tabindex", "-1");
 			if (!a.id)
 				$(a).attr("id", self._tabId(a) + "-tab");
 			$("#" + $(a).attr("aria-controls")).attr("aria-labelledby", a.id);
@@ -355,10 +357,8 @@ $.widget( "ui.tabs", {
 		}
 
 		// disable tabs
-		var disabledValue;
 		for ( var i = 0, li; ( li = this.lis[ i ] ); i++ ) {
-			disabledValue = disabled === true || $.inArray( i, disabled ) !== -1;
-			$( li ).toggleClass( "ui-state-disabled", disabledValue).children('a').attr("aria-disabled", disabledValue.toString());
+			$( li ).toggleClass( "ui-state-disabled", ( disabled === true || $.inArray( i, disabled ) !== -1 ) );
 		}
 
 		this.options.disabled = disabled;
@@ -466,13 +466,24 @@ $.widget( "ui.tabs", {
 		}
 
 		function show() {
+		eventData.newTab
+			.attr( "aria-selected", "true" )
+			.attr( "tabindex", "0" )
+			.closest( "li" ).addClass( "ui-tabs-active ui-state-active" );
+		
+		toShow.attr("aria-hidden", "false")
+			.attr("aria-expanded", "true");
+		
+		
+		eventData.newTab.closest( "li" ).addClass( "ui-tabs-active ui-state-active" );
 			eventData.newTab
 				.attr("aria-selected", "true").attr("tabindex", "0")
 				.closest( "li" ).addClass( "ui-tabs-active ui-state-active" );
 			toShow.attr("aria-hidden", "false").attr("aria-expanded", "true");
 
 			if ( toShow.length && that.showFx ) {
-				toShow.animate( that.showFx, that.showFx.duration || "normal", function() {
+				toShow
+					.animate( that.showFx, that.showFx.duration || "normal", function() {
 						that._resetStyle( $( this ), that.showFx );
 						complete();
 					});
@@ -526,7 +537,7 @@ $.widget( "ui.tabs", {
 		// meta-function to give users option to provide a href string instead of a numerical index.
 		// also sanitizes numerical indexes to valid values.
 		if ( typeof index == "string" ) {
-			index = this.anchors.index( this.anchors.filter( "[href$='" + index + "']" ) );
+			index = this.anchors.index( this.anchors.filter( "[href$=" + index + "]" ) );
 		}
 
 		return index;
@@ -552,14 +563,7 @@ $.widget( "ui.tabs", {
 			.removeAttr( "aria-controls" )
 			.removeAttr( "tabindex" );
 
-		this.lis.unbind( ".tabs" ).add( this.panels ).removeAttr("role").each(function() {
-			if ( $.data( this, "ui-tabs-destroy" ) ) {
-		this.anchors
-			.unbind( ".tabs" )
-			.removeData( "href.tabs" )
-			.removeData( "load.tabs" );
-
-		this.lis.unbind( ".tabs" ).add( this.panels ).each(function() {
+		this.lis.unbind( ".tabs" ).add( this.panels ).removeAttr( "role" ).each(function() {
 			if ( $.data( this, "ui-tabs-destroy" ) ) {
 				$( this ).remove();
 			} else {
@@ -576,7 +580,11 @@ $.widget( "ui.tabs", {
 			}
 		});
 
-		this.panels.show().removeAttr("aria-hidden").removeAttr("aria-expanded").removeAttr("aria-labelledby").unbind(".tabs");
+		this.panels.show()
+			.removeAttr( "aria-hidden" )
+			.removeAttr( "aria-expanded" )
+			.removeAttr( "aria-labelledby" )
+			.unbind( ".tabs" );
 
 		return this;
 	},
@@ -880,7 +888,7 @@ if ( $.uiBackCompat !== false ) {
 				}
 			}
 			panel.addClass( "ui-tabs-panel ui-widget-content ui-corner-bottom" ).hide()
-			.attr("aria-hidden", "true");
+			.attr( "aria-hidden", "true" );
 
 			if ( doInsertAfter ) {
 				li.appendTo( this.list );
