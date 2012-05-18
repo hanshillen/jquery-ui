@@ -42,7 +42,7 @@ $.widget( "ui.slider", $.ui.mouse, {
 			existingHandles = this.element.find( ".ui-slider-handle" ).addClass( "ui-state-default ui-corner-all" ),
 			handle = "<a class='ui-slider-handle ui-state-default ui-corner-all' href='#'></a>",
 			handleCount = ( o.values && o.values.length ) || 1,
-			handles = [];
+			handles = [], self = this;
 
 		this._keySliding = false;
 		this._mouseSliding = false;
