@@ -1,4 +1,4 @@
-/*
+/*!
  * jQuery UI Accordion @VERSION
  *
  * Copyright 2012, AUTHORS.txt (http://jqueryui.com/about)
@@ -12,7 +12,23 @@
  *	jquery.ui.widget.js
  */
 (function( $, undefined ) {
-	var idIncrement = 0;
+
+var uid = 0,
+	hideProps = {},
+	showProps = {},
+	showPropsAdjust = {};
+
+hideProps.height = hideProps.paddingTop = hideProps.paddingBottom =
+	hideProps.borderTopWidth = hideProps.borderBottomWidth = "hide";
+showProps.height = showProps.paddingTop = showProps.paddingBottom =
+	showProps.borderTopWidth = showProps.borderBottomWidth = "show";
+$.extend( showPropsAdjust, showProps, { accordionHeight: "show" } );
+
+$.fx.step.accordionHeight = function( fx ) {
+	var elem = $( fx.elem ),
+		data = elem.data( "ui-accordion-height" );
+	elem.height( data.total - elem.outerHeight() - data.toHide.outerHeight() + elem.height() );
+};
 
 $.widget( "ui.accordion", {
 	version: "@VERSION",
@@ -34,9 +50,9 @@ $.widget( "ui.accordion", {
 	},
 
 	_create: function() {
-		this.accordionId = this.element.attr( "id" ) || "ui-accordion-" + idIncrement++;
-		var accordionId = this.accordionId;
-		var options = this.options;
+		var accordionId = this.accordionId = "ui-accordion-" +
+				(this.element.attr( "id" ) || ++uid),
+			options = this.options;
 
 		this.prevShow = this.prevHide = $();
 		this.element.addClass( "ui-accordion ui-widget ui-helper-reset" );
@@ -71,17 +87,21 @@ $.widget( "ui.accordion", {
 
 		this.headers
 			.attr( "role", "tab" )
-			.each(function( i ){
-				var hdr = $( this );
-				var pnl = hdr.next();
-				if ( !hdr.attr( "id" ) ) {
-					hdr.attr( "id", accordionId + "-hdr-" + i );
+			.each(function( i ) {
+				var header = $( this ),
+					headerId = header.attr( "id" ),
+					panel = header.next(),
+					panelId = panel.attr( "id" );
+				if ( !headerId ) {
+					headerId = accordionId + "-header-" + i;
+					header.attr( "id", headerId );
 				}
-				if ( !pnl.attr( "id" ) ) {
-					pnl.attr( "id", accordionId + "-pnl-" + i );
+				if ( !panelId ) {
+					panelId = accordionId + "-panel-" + i;
+					panel.attr( "id", panelId );
 				}
-				hdr.attr( "aria-controls", pnl.attr( "id" ))
-				pnl.attr( "aria-labelledby", hdr.attr( "id" ))
+				header.attr( "aria-controls", panelId );
+				panel.attr( "aria-labelledby", headerId );
 			})
 			.next()
 				.attr( "role", "tabpanel" );
@@ -89,13 +109,14 @@ $.widget( "ui.accordion", {
 		this.headers
 			.not( this.active )
 			.attr({
-				// TODO: document support for each of these
 				"aria-selected": "false",
 				tabIndex: -1
 			})
 			.next()
-				.attr( "aria-expanded", "false" )
-				.attr( "aria-hidden", "true" )
+				.attr({
+					"aria-expanded": "false",
+					"aria-hidden": "true"
+				})
 				.hide();
 
 		// make sure at least one header is in the tab order
@@ -107,10 +128,14 @@ $.widget( "ui.accordion", {
 				tabIndex: 0
 			})
 			.next()
-				.attr( "aria-expanded", "true" )
-				.attr( "aria-hidden", "false" );
+				.attr({
+					"aria-expanded": "true",
+					"aria-hidden": "false"
+				});
 		}
 
+		this._bind( this.headers, { keydown: "_keydown" });
+		this._bind( this.headers.next(), { keydown: "_panelKeyDown" });
 		this._setupEvents( options.event );
 	},
 
@@ -142,7 +167,8 @@ $.widget( "ui.accordion", {
 	},
 
 	_destroy: function() {
-		var accordionId = this.accordionId;
+		var contents;
+
 		// clean up main element
 		this.element
 			.removeClass( "ui-accordion ui-widget ui-helper-reset" )
@@ -150,30 +176,28 @@ $.widget( "ui.accordion", {
 
 		// clean up headers
 		this.headers
-			.unbind( ".accordion" )
 			.removeClass( "ui-accordion-header ui-accordion-header-active ui-helper-reset ui-state-default ui-corner-all ui-state-active ui-state-disabled ui-corner-top" )
 			.removeAttr( "role" )
 			.removeAttr( "aria-selected" )
 			.removeAttr( "aria-controls" )
 			.removeAttr( "tabIndex" )
-			.each(function(){
-				if ( this.id.indexOf( accordionId + "-hdr-" ) === 0 ) {
+			.each(function() {
+				if ( /^ui-accordion/.test( this.id ) ) {
 					this.removeAttribute( "id" );
 				}
 			});
 		this._destroyIcons();
 
 		// clean up content panels
-		var contents = this.headers.next()
-			.unbind( ".accordion" )
+		contents = this.headers.next()
 			.css( "display", "" )
 			.removeAttr( "role" )
 			.removeAttr( "aria-expanded" )
 			.removeAttr( "aria-hidden" )
 			.removeAttr( "aria-labelledby" )
 			.removeClass( "ui-helper-reset ui-widget-content ui-corner-bottom ui-accordion-content ui-accordion-content-active ui-state-disabled" )
-			.each(function(){
-				if ( this.id.indexOf( accordionId + "-pnl-" ) === 0 ) {
+			.each(function() {
+				if ( /^ui-accordion/.test( this.id ) ) {
 					this.removeAttribute( "id" );
 				}
 			});
@@ -192,7 +216,8 @@ $.widget( "ui.accordion", {
 
 		if ( key === "event" ) {
 			if ( this.options.event ) {
-				this.headers.unbind( ".accordion" );
+				this.headers.unbind(
+					this.options.event.split( " " ).join( ".accordion " ) + ".accordion" );
 			}
 			this._setupEvents( value );
 		}
@@ -259,13 +284,8 @@ $.widget( "ui.accordion", {
 	},
 
 	_panelKeyDown : function( event ) {
-		var keyCode = $.ui.keyCode;
-		switch ( event.keyCode ) {
-			case keyCode.UP:
-				if ( event.ctrlKey ) {
-					$( event.currentTarget ).prev().focus();
-				}
-				break;
+		if ( event.keyCode === $.ui.keyCode.UP && event.ctrlKey ) {
+			$( event.currentTarget ).prev().focus();
 		}
 	},
 
@@ -347,18 +367,14 @@ $.widget( "ui.accordion", {
 	},
 
 	_setupEvents: function( event ) {
-		var events = {
-			keydown: "_keydown"
-		};
-		if ( event ) {
-			$.each( event.split(" "), function( index, eventName ) {
-				events[ eventName ] = "_eventHandler";
-			});
+		var events = {};
+		if ( !event ) {
+			return;
 		}
+		$.each( event.split(" "), function( index, eventName ) {
+			events[ eventName ] = "_eventHandler";
+		});
 		this._bind( this.headers, events );
-		this._bind( this.headers.next(), {
-			keydown : "_panelKeyDown"
-		} );
 	},
 
 	_eventHandler: function( event ) {
@@ -394,9 +410,8 @@ $.widget( "ui.accordion", {
 		this._toggle( eventData );
 
 		// switch classes
-		active
-			.removeClass( "ui-accordion-header-active ui-state-active ui-corner-top" )
-			.addClass( "ui-corner-all" );
+		// corner classes on the previously active header stay after the animation
+		active.removeClass( "ui-accordion-header-active ui-state-active" );
 		if ( options.icons ) {
 			active.children( ".ui-accordion-header-icon" )
 				.removeClass( options.icons.activeHeader )
@@ -440,7 +455,8 @@ $.widget( "ui.accordion", {
 			.attr({
 				"aria-expanded": "false",
 				"aria-hidden": "true"
-			}).prev()
+			})
+			.prev()
 				.attr({
 					"aria-selected": "false",
 					tabIndex: -1
@@ -449,7 +465,8 @@ $.widget( "ui.accordion", {
 			.attr({
 				"aria-expanded": "true",
 				"aria-hidden": "false"
-			}).prev()
+			})
+			.prev()
 				.attr({
 					"aria-selected": "true",
 					tabIndex: 0
@@ -478,10 +495,10 @@ $.widget( "ui.accordion", {
 		easing = easing || options.easing || animate.easing;
 		duration = duration || options.duration || animate.duration;
 
-		if ( !toHide.size() ) {
+		if ( !toHide.length ) {
 			return toShow.animate( showProps, duration, easing, complete );
 		}
-		if ( !toShow.size() ) {
+		if ( !toShow.length ) {
 			return toHide.animate( hideProps, duration, easing, complete );
 		}
 
@@ -498,11 +515,14 @@ $.widget( "ui.accordion", {
 	},
 
 	_toggleComplete: function( data ) {
-		var toShow = data.newContent,
-			toHide = data.oldContent;
+		var toHide = data.oldContent;
 
-		// other classes are removed before the animation; this one needs to stay until completed
-		toHide.removeClass( "ui-accordion-content-active" );
+		toHide
+			.removeClass( "ui-accordion-content-active" )
+			.prev()
+				.removeClass( "ui-corner-top" )
+				.addClass( "ui-corner-all" );
+
 		// Work around for rendering bug in IE (#5421)
 		if ( toHide.length ) {
 			toHide.parent()[0].className = toHide.parent()[0].className;
@@ -511,20 +531,6 @@ $.widget( "ui.accordion", {
 		this._trigger( "activate", null, data );
 	}
 });
-
-$.fx.step.accordionHeight = function( fx ) {
-	var elem = $( fx.elem ),
-		data = elem.data( "ui-accordion-height" );
-	elem.height( data.total - elem.outerHeight() - data.toHide.outerHeight() + elem.height() );
-};
-var hideProps = {},
-	showProps = {},
-	showPropsAdjust = {};
-hideProps.height = hideProps.paddingTop = hideProps.paddingBottom =
-	hideProps.borderTopWidth = hideProps.borderBottomWidth = "hide";
-showProps.height = showProps.paddingTop = showProps.paddingBottom =
-	showProps.borderTopWidth = showProps.borderBottomWidth = "show";
-$.extend( showPropsAdjust, showProps, { accordionHeight: "show" } );
 
 
 
@@ -693,7 +699,7 @@ if ( $.uiBackCompat !== false ) {
 							easing: "easeOutBounce",
 							duration: 1000
 						}
-					}
+					};
 				} else {
 					options.animate = options.animated;
 				}

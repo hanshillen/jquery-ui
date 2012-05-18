@@ -1,11 +1,9 @@
-/*
+/*!
  * jQuery UI Tooltip @VERSION
  *
  * Copyright 2012, AUTHORS.txt (http://jqueryui.com/about)
  * Dual licensed under the MIT or GPL Version 2 licenses.
  * http://jquery.org/license
- *
- * http://docs.jquery.com/UI/Tooltip
  *
  * Depends:
  *	jquery.ui.core.js
@@ -99,7 +97,7 @@ $.widget( "ui.tooltip", {
 			return;
 		}
 
-		if ( !target.data( "ui-tooltip-title" ) ) {
+		if ( target.attr( "title" ) ) {
 			target.data( "ui-tooltip-title", target.attr( "title" ) );
 		}
 
@@ -130,11 +128,15 @@ $.widget( "ui.tooltip", {
 		// we have to check first to avoid defining a title if none exists
 		// (we don't want to cause an element to start matching [title])
 
-		// We don't use removeAttr as that causes the native tooltip to show
-		// up in IE (9 and below, didn't yet test 10). Happens only when removing
-		// inside the mouseover handler.
+		// We use removeAttr only for key events, to allow IE to export the correct
+		// accessible attributes. For mouse events, set to empty string to avoid
+		// native tooltip showing up (happens only when removing inside mouseover).
 		if ( target.is( "[title]" ) ) {
-			target.attr( "title", "" );
+			if ( event && event.type === "mouseover" ) {
+				target.attr( "title", "" );
+			} else {
+				target.removeAttr( "title" );
+			}
 		}
 
 		// ajaxy tooltip can update an existing one
@@ -159,7 +161,7 @@ $.widget( "ui.tooltip", {
 			mouseleave: "close",
 			focusout: "close",
 			keyup: function( event ) {
-				if ( event.keyCode == $.ui.keyCode.ESCAPE ) {
+				if ( event.keyCode === $.ui.keyCode.ESCAPE ) {
 					var fakeEvent = $.Event(event);
 					fakeEvent.currentTarget = target[0];
 					this.close( fakeEvent, true );
@@ -173,9 +175,18 @@ $.widget( "ui.tooltip", {
 			target = $( event ? event.currentTarget : this.element ),
 			tooltip = this._find( target );
 
+		// disabling closes the tooltip, so we need to track when we're closing
+		// to avoid an infinite loop in case the tooltip becomes disabled on close
+		if ( this.closing ) {
+			return;
+		}
+
 		// don't close if the element has focus
 		// this prevents the tooltip from closing if you hover while focused
-		if ( !force && this.document[0].activeElement === target[0] ) {
+		// we have to check the event type because tabbing out of the document
+		// may leave the element as the activeElement
+		if ( !force && event && event.type !== "focusout" &&
+				this.document[0].activeElement === target[0] ) {
 			return;
 		}
 
@@ -195,7 +206,9 @@ $.widget( "ui.tooltip", {
 		target.removeData( "tooltip-open" );
 		target.unbind( "mouseleave.tooltip focusout.tooltip keyup.tooltip" );
 
+		this.closing = true;
 		this._trigger( "close", event, { tooltip: tooltip } );
+		this.closing = false;
 	},
 
 	_tooltip: function( element ) {

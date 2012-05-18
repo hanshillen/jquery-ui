@@ -1,4 +1,4 @@
-/*
+/*!
  * jQuery UI Button @VERSION
  *
  * Copyright 2012, AUTHORS.txt (http://jqueryui.com/about)
@@ -196,7 +196,7 @@ $.widget( "ui.button", {
 					if ( options.disabled ) {
 						return false;
 					}
-					if ( event.keyCode == $.ui.keyCode.SPACE || event.keyCode == $.ui.keyCode.ENTER ) {
+					if ( event.keyCode === $.ui.keyCode.SPACE || event.keyCode === $.ui.keyCode.ENTER ) {
 						$( this ).addClass( "ui-state-active" );
 					}
 				})
@@ -222,6 +222,7 @@ $.widget( "ui.button", {
 	},
 
 	_determineButtonType: function() {
+		var ancestor, labelSelector, checked;
 
 		if ( this.element.is(":checkbox") ) {
 			this.type = "checkbox";
@@ -236,8 +237,8 @@ $.widget( "ui.button", {
 		if ( this.type === "checkbox" || this.type === "radio" ) {
 			// we don't search against the document in case the element
 			// is disconnected from the DOM
-			var ancestor = this.element.parents().last(),
-				labelSelector = "label[for='" + this.element.attr("id") + "']";
+			ancestor = this.element.parents().last();
+			labelSelector = "label[for='" + this.element.attr("id") + "']";
 			this.buttonElement = ancestor.find( labelSelector );
 			if ( !this.buttonElement.length ) {
 				ancestor = ancestor.length ? ancestor.siblings() : this.element.siblings();
@@ -248,7 +249,7 @@ $.widget( "ui.button", {
 			}
 			this.element.addClass( "ui-helper-hidden-accessible" );
 
-			var checked = this.element.is( ":checked" );
+			checked = this.element.is( ":checked" );
 			if ( checked ) {
 				this.buttonElement.addClass( "ui-state-active" );
 			}
