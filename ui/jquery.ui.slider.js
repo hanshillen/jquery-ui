@@ -626,7 +626,9 @@ $.widget( "ui.slider", $.ui.mouse, {
 			o = this.options,
 			that = this,
 			animate = ( !this._animateOff ) ? o.animate : false,
-			_set = {};
+			_set = {},
+			self = this
+			;
 
 		if ( this.options.values && this.options.values.length ) {
 			this.handles.each(function( i, j ) {
