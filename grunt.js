@@ -32,6 +32,7 @@ var // modules
 		"accordion",
 		"autocomplete",
 		"button",
+		"checkbox",
 		"datepicker",
 		"dialog",
 		"menu",
