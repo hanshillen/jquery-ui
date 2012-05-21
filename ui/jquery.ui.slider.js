@@ -204,7 +204,7 @@ $.widget( "ui.slider", $.ui.mouse, {
             if (o.label) { // multiple handles, single label
                 this.handles.each(function(i,e) {
                     // create unique label for each handle
-                    labelSuffix = (o.range && i < 2) ? (i == 0 ? "min" : "max") : i + 1;
+                    labelSuffix = (o.range && i < 2) ? (i == 0 ? "minimum" : "maximum") : i + 1;
                     $(this).attr("title", o.label + " " + labelSuffix);
                 });
             }
